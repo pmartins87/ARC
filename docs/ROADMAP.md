@@ -1,122 +1,267 @@
-# ARC Prize 2026 Roadmap
+# ARC Prize 2026 — Finite Roadmap
 
-## Competition target
+## Mission
 
-Primary: ARC-AGI-2 Progress Prize / Grand Prize eligibility.
-Secondary: Paper Track using the same system and experiments.
+Build the strongest prize-eligible ARC-AGI-2 system we can before the competition deadline, and use the same research record for the ARC Prize 2026 Paper Track.
 
-The roadmap is gate-driven. Calendar dates are planning bounds, not permission to advance with weak evidence.
+**Outcome target:** win prize money.
+
+**Operational definition of DONE:** the project is complete when:
+1. the final ARC-AGI-2 code submission has been accepted by Kaggle;
+2. the exact submitted system is reproducible from a tagged commit/artifact set;
+3. the required open-source/writeup obligations have been satisfied;
+4. the Paper Track submission has been sent;
+5. the experiment ledger and final result are archived.
+
+Winning is the outcome target, but it is not a condition for ending research: after the final deadlines we stop active R&D, await judging, and only perform organizer/prize administration or a short postmortem.
+
+## Hard calendar boundaries
+
+- ARC-AGI-2 entry/team deadline: **2026-10-26 23:59 UTC**.
+- ARC-AGI-2 final code deadline: **2026-11-02 23:59 UTC**.
+- Paper Track deadline: **2026-11-09 23:59 UTC**.
+- Winners announcement: **2026-12-04**.
+
+There will be **no open-ended research after 2026-11-02 for ARC-AGI-2** and **no open-ended paper work after 2026-11-09**.
+
+## Project state machine
+
+Every status report must identify exactly one active milestone:
+
+`M0 Foundation -> M1 Baselines -> M2 Error Map/Structural Solver -> M3 Novel Core -> M4 Pass@2 -> M5 Hybrid Guidance -> M6 Ensemble/Freeze -> M7 Final Submission -> M8 Paper/Release -> M9 Closeout`
+
+A milestone can be `NOT_STARTED`, `ACTIVE`, `PASS`, `PARTIAL`, or `STOPPED`.
+
+If a milestone misses its gate by its timebox, we record `PARTIAL`, keep the best working artifact, and move on. A weak phase is not allowed to consume the rest of the project.
+
+---
 
 ## M0 — Foundation and rules freeze
 
-**Gate:** repository, exact scorer, test-output schema, evaluation policy, source map, and reproducible experiment format exist and are checked.
+**Timebox:** 2026-08-24.
+
+**Status:** PASS.
 
 Deliverables:
-- official rules/deadlines snapshot;
-- exact pass@2 scorer;
-- deterministic initial split tooling;
-- state-of-the-art audit;
-- competition-risk register.
+- repository/project scaffold;
+- exact pass@2 scorer and schema validation;
+- research/leakage protocol;
+- experiment ledger contract;
+- initial state-of-the-art map;
+- competition mechanics/deadline snapshot.
+
+**Gate:** scoring, schema, evaluation policy, source map, and reproducible experiment format exist and have been checked.
+
+---
 
 ## M1 — Reproduce competitive baselines
 
-**Purpose:** establish what is already achievable before inventing new architecture.
+**Timebox:** 2026-08-24 through 2026-09-02.
 
-Required baselines:
-1. trivial/schema baseline;
-2. compact symbolic/program-synthesis baseline;
-3. 2025 NVARC-style public Kaggle baseline or closest reproducible 2026 version;
-4. TRM-family baseline that fits available compute;
-5. one MDL/program-synthesis baseline (CompressARC or equivalent) where feasible.
+**Purpose:** establish the real 2026 public frontier before we spend time inventing architecture.
 
-**Gate:** reproducible score/runtime table with at least one serious neural and one serious symbolic baseline.
+Required evidence:
+1. B0: unchanged public NVARC-derived Kaggle anchor;
+2. B1: one public ~31% frontier notebook reproduced or explained if irreproducible;
+3. one TRM-family result with runtime/score recorded;
+4. one symbolic/program-synthesis baseline, even if much weaker;
+5. solved-task overlap and runtime table where outputs are available.
 
-## M2 — Structural solver core
+**Gate:** we have a reproducible score/runtime table with at least one serious neural baseline and one symbolic baseline, plus a clear error/complementarity map.
 
-Build a general-purpose representation and verified program-search layer:
-- color/background hypotheses;
-- 4- and 8-connected components;
-- bounding boxes, masks, holes, symmetry, containment, adjacency;
-- object relations;
-- geometric transforms;
-- color transforms;
-- extraction/crop/composition;
+**Failure rule:** if a public notebook cannot be reproduced after two controlled attempts, record the blocker and move to the next baseline.
+
+---
+
+## M2 — Error map and structural solver
+
+**Timebox:** 2026-09-03 through 2026-09-12.
+
+**Purpose:** build only symbolic capabilities that attack measured baseline failures.
+
+Candidate capabilities:
+- background/color hypotheses;
+- 4/8-connected components;
+- object masks, bounding boxes, holes, symmetry;
+- containment/adjacency/alignment relations;
+- geometric and color transforms;
+- crop/extraction/composition;
 - line/ray/region operations;
-- compact DSL;
-- exact demonstration verifier.
+- compact DSL and exact demonstration verifier.
 
-**Gate:** measurable held-out gain over the selected symbolic baseline without task-ID rules.
+**Gate:** the structural solver adds measurable held-out coverage or complementary exact solves versus M1. Mere code volume is not success.
 
-## M3 — Two-attempt inference
+**Stop rule:** primitives with no demonstrated coverage after controlled tests are frozen rather than endlessly expanded.
 
-Develop candidate ranking and deliberate attempt diversity.
+---
+
+## M3 — Novel competitive core
+
+**Timebox:** 2026-09-13 through 2026-09-22.
+
+**Purpose:** test our first genuinely original hypothesis derived from M1/M2 evidence.
+
+Possible directions include dual grid/object representations, verified program generation, refinement loops, search-budget adaptation, or another mechanism justified by the failure map.
+
+**Gate:** at least one original mechanism shows a positive, reproducible ablation on validation/held-out data or provides a strong Paper Track result.
+
+**Idea budget:** an idea gets at most two serious implementation/ablation cycles before KEEP / REJECT / INCONCLUSIVE. A third cycle requires specific evidence that the next test can change the decision.
+
+---
+
+## M4 — Two-attempt inference (pass@2)
+
+**Timebox:** 2026-09-23 through 2026-10-02.
+
+**Purpose:** exploit the competition's two attempts deliberately rather than returning correlated guesses.
 
 Test:
-- top-2 independent scores;
-- semantic-program diversity;
+- top-2 score ranking;
+- semantic/program diversity;
 - representation diversity;
-- uncertainty-conditioned second attempts;
-- consensus/ensemble selection.
+- uncertainty-conditioned attempt 2;
+- consensus/ensemble candidate selection.
 
-**Gate:** statistically credible pass@2 gain on held-out tasks with no material pass@1 regression.
+**Gate:** credible pass@2 improvement with no material pass@1 degradation under the same evaluation protocol.
 
-## M4 — Learned search guidance / refinement
+**Failure rule:** if diversity does not improve pass@2, revert to the best simple top-2 strategy and close M4.
 
-Only after symbolic search telemetry exists, train or adapt a model to prioritize useful hypotheses.
+---
+
+## M5 — Learned guidance / hybrid refinement
+
+**Timebox:** 2026-10-03 through 2026-10-14.
+
+**Purpose:** use learned models only where M1-M4 telemetry shows they can guide search, ranking, or refinement.
 
 Candidate families:
-- small recursive model/TRM-derived guidance;
+- TRM/recursive-model guidance;
 - learned primitive/operator proposal;
 - learned object-role prediction;
-- synthetic-task curriculum;
+- synthetic curriculum;
 - test-time refinement constrained by exact demonstration verification.
 
-**Gate:** positive ablation against the same search budget and runtime envelope.
+**Gate:** positive ablation against the same search/runtime budget, or a clearly complementary set of exact solves that improves an ensemble.
 
-## M5 — Ensemble under Kaggle budget
+**Stop rule:** no large retraining project is allowed unless compute, time-to-result, and expected marginal gain are documented first.
 
-Combine complementary solvers rather than merely stacking correlated variants.
+---
+
+## M6 — Ensemble and feature freeze
+
+**Timebox:** 2026-10-15 through 2026-10-23.
+
+**Purpose:** convert research components into one competition system under Kaggle constraints.
 
 Optimize:
 - solver routing;
-- time allocation by task difficulty;
+- time allocation by difficulty;
 - early stopping;
-- shared perception/cache;
+- shared cache/perception;
 - candidate normalization;
-- final two-attempt selection.
+- final two-attempt selection;
+- runtime/VRAM margin.
 
-**Gate:** full offline notebook finishes safely within Kaggle's 12-hour limit with margin and improves hidden/public competition score.
+**Gate:** the full offline notebook runs within the Kaggle 12-hour limit with safe margin and beats the selected M1 baseline on our strongest legitimate evaluation evidence.
 
-## M6 — Prize submission hardening
+**Hard freeze:** after **2026-10-23**, no new architecture family enters the final system. Only bug fixes, parameter choices already in the experiment plan, packaging, and reliability work are allowed.
 
-- deterministic/offline packaging;
-- dependency freeze;
-- failure-safe submission generation;
-- complete task-ID/output coverage validator;
-- multiple dry runs;
-- runtime margin;
-- final Kaggle submissions.
+---
 
-**Gate:** final notebook reproducibly emits valid `submission.json` with zero missing tasks/attempts.
+## M7 — Prize submission hardening
 
-## M7 — Grand Prize / Paper Track package
+**Timebox:** 2026-10-24 through 2026-11-02.
 
-Prepare:
-- public notebook;
-- open-source repository release;
-- 1,500-word Kaggle writeup;
-- optional PDF paper/project link;
-- ablation table;
+Tasks:
+- dependency/model freeze;
+- deterministic offline packaging;
+- zero-missing-output validator;
+- repeated full dry runs;
+- failure-safe `submission.json` generation;
+- runtime margin checks;
+- final Kaggle submissions;
+- tag the exact final source/artifacts.
+
+**Gate:** Kaggle accepts the final submission, and the exact submitted version can be reproduced.
+
+**Hard stop:** ARC-AGI-2 R&D ends at the final submission deadline.
+
+---
+
+## M8 — Paper Track and open-source release
+
+**Timebox:** evidence collection occurs throughout the project; finalization is 2026-11-03 through 2026-11-09.
+
+Deliverables:
+- competition writeup;
+- Paper Track submission;
 - method diagram;
+- ablation/result tables;
 - reproducibility instructions;
-- limitations and negative results.
+- limitations and negative results;
+- required public repository/notebook artifacts;
+- links from claims to experiment records/commits.
 
-**Gate:** every scientific claim maps to an experiment artifact and commit.
+**Gate:** Paper Track submission accepted before the deadline and release obligations satisfied.
 
-## Decision rules
+**Hard stop:** research/paper production ends at the Paper Track deadline.
 
-- Do not keep an idea because it sounds intelligent; keep it because it scores.
-- Prefer complementary errors over redundant ensemble members.
-- A leaderboard improvement that fails internal held-out validation is suspect.
-- A paper idea that does not improve score can survive only if it yields strong conceptual evidence under the Paper Track rubric.
-- Freeze the final system early enough to permit repeated full offline runs.
+---
+
+## M9 — Outcome and project closeout
+
+**Timebox:** 2026-11-10 through winner announcement on 2026-12-04.
+
+No active model research. Activities are limited to:
+- respond to organizer verification requests;
+- preserve/release requested artifacts;
+- record leaderboard/final judging outcome;
+- prize administration if applicable;
+- short postmortem and explicit project closure.
+
+**Gate:** final outcome recorded and project marked `CLOSED`.
+
+---
+
+## Repository visibility policy
+
+**Decision for the current phase: keep the repository PUBLIC through M1.**
+
+Reason:
+- M0/M1 contain infrastructure, published methods, baseline reproduction, and public research methodology;
+- public CI is convenient during this phase;
+- there is little competitive value in hiding already-public baselines.
+
+Follower count is not a security boundary: public repositories can be found through search/indexing even with no followers.
+
+**Automatic privacy trigger:** before committing the first genuinely original competitive mechanism, unpublished ablation result, or materially improved system that we would not want competitors to copy, reassess visibility. Default action at that trigger is to make the repository private until the required prize/open-source window.
+
+GitHub Actions convenience is not allowed to override protection of a genuinely valuable competitive advantage. Heavy ARC compute should run on Kaggle/appropriate compute anyway; Actions is primarily CI/reproducibility infrastructure here.
+
+---
+
+## Project-wide decision rules
+
+1. Score/evidence beats elegance.
+2. Every material experiment gets an ID, commit, config, runtime, metrics, and KEEP/REJECT/INCONCLUSIVE conclusion.
+3. Prefer complementary exact solves over highly correlated models with similar headline scores.
+4. Leaderboard movement that fails internal validation is suspect.
+5. No task-ID-specific rules or evaluation-set hand fitting.
+6. Every new idea has a time/iteration budget.
+7. Missing a milestone gate does not extend the project indefinitely; record PARTIAL and advance with the best known artifact.
+8. No new architecture after M6 freeze.
+9. Final submission reliability takes priority over late speculative score gains.
+10. After the final deadlines, the project is finished regardless of prize outcome; judging/admin is M9, not continued R&D.
+
+## Status-report contract
+
+Whenever asked `onde estamos?`, report in this format:
+
+- **Current milestone:** Mx — name / status.
+- **Completed:** milestones with PASS.
+- **Current gate:** exact condition we are trying to satisfy.
+- **Evidence so far:** latest reproducible scores/results.
+- **Blocker:** if any.
+- **Next action:** one concrete next step.
+- **Timebox remaining:** calendar deadline for the current milestone.
+- **Project end:** ARC-AGI-2 2026-11-02; Paper Track 2026-11-09; closeout after results.
