@@ -34,11 +34,25 @@ def split_ids(task_ids: list[str], profile: str, seed: str) -> dict[str, list[st
     }
 
 
+def load_task_ids(source: Path) -> list[str]:
+    if source.is_dir():
+        task_ids = sorted(path.stem for path in source.glob("*.json"))
+        if not task_ids:
+            raise ValueError(f"no JSON task files found in {source}")
+        return task_ids
+
+    with source.open("r", encoding="utf-8") as fh:
+        tasks = json.load(fh)
+    if not isinstance(tasks, dict):
+        raise ValueError("challenge JSON must be keyed by task ID")
+    return sorted(tasks)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Create deterministic ARC split manifests from challenge task IDs."
+        description="Create deterministic ARC split manifests from a challenge JSON or task directory."
     )
-    parser.add_argument("challenges", type=Path)
+    parser.add_argument("source", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument(
         "--profile",
@@ -53,18 +67,14 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    with args.challenges.open("r", encoding="utf-8") as fh:
-        tasks = json.load(fh)
-    if not isinstance(tasks, dict):
-        raise ValueError("challenges JSON must be keyed by task ID")
-
+    task_ids = load_task_ids(args.source)
     manifest = {
         "metadata": {
             "profile": args.profile,
             "seed": args.seed,
-            "task_count": len(tasks),
+            "task_count": len(task_ids),
         },
-        "splits": split_ids(list(tasks), args.profile, args.seed),
+        "splits": split_ids(task_ids, args.profile, args.seed),
     }
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
