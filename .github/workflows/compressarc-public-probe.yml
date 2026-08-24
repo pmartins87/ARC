@@ -1,0 +1,78 @@
+name: CompressARC Public Artifact Probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/probe_compressarc_artifact.py'
+      - 'scripts/make_split.py'
+      - 'pyproject.toml'
+      - '.github/workflows/compressarc-public-probe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/probe_compressarc_artifact.py'
+      - 'scripts/make_split.py'
+      - 'pyproject.toml'
+      - '.github/workflows/compressarc-public-probe.yml'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - name: Checkout ARC project
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen CompressARC public artifact source
+        uses: actions/checkout@v4
+        with:
+          repository: iliao2345/CompressARC
+          ref: 83a22218024d46273eb32b769a906340202ffb4d
+          path: external-compressarc
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install probe dependency
+        run: python -m pip install 'numpy>=2,<3'
+
+      - name: Create our frozen 60/30/30 evaluation split
+        run: >-
+          python scripts/make_split.py
+          external-compressarc/dataset/arc-agi_evaluation_challenges.json
+          experiments/compressarc_eval_split_v1.json
+          --profile evaluation
+          --seed arc-2026-v1
+
+      - name: Probe full public evaluation artifact at final stored iteration
+        run: >-
+          python scripts/probe_compressarc_artifact.py
+          external-compressarc/results_for_the_blog_post/predictions_evaluation.npz
+          external-compressarc/dataset/arc-agi_evaluation_challenges.json
+          external-compressarc/dataset/arc-agi_evaluation_solutions.json
+          --json-out experiments/compressarc_public_full_final.json
+
+      - name: Probe frozen development split only
+        run: >-
+          python scripts/probe_compressarc_artifact.py
+          external-compressarc/results_for_the_blog_post/predictions_evaluation.npz
+          external-compressarc/dataset/arc-agi_evaluation_challenges.json
+          external-compressarc/dataset/arc-agi_evaluation_solutions.json
+          --manifest experiments/compressarc_eval_split_v1.json
+          --split development
+          --json-out experiments/compressarc_public_dev_final.json
+
+      - name: Upload source-grounded reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: compressarc-public-probe
+          path: |
+            experiments/compressarc_eval_split_v1.json
+            experiments/compressarc_public_full_final.json
+            experiments/compressarc_public_dev_final.json
