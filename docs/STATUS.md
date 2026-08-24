@@ -6,8 +6,9 @@ Last updated: 2026-08-24
 
 - **Current milestone:** M1 — Reproduce competitive baselines — **ACTIVE**.
 - **Completed:** M0 — Foundation and rules freeze — **PASS**.
-- **Current gate:** reproduce the 2026 public baseline frontier and establish a score/runtime/complementarity table containing at least one serious neural and one symbolic baseline.
-- **Current experiment:** B0 — unchanged `BlackCat Stable Anchor — NVARC Guard` reproduction.
+- **Current gate:** establish a reproducible score/runtime/complementarity table containing a competitive neural baseline and an independent symbolic baseline.
+- **User-side experiment:** B0 — unchanged `BlackCat Stable Anchor — NVARC Guard` Kaggle reproduction.
+- **Research-side experiment:** S0 — compact verified symbolic baseline — implementation complete; measured development benchmark pending/automated through GitHub Actions.
 - **Primary competition end:** 2026-11-02 23:59 UTC.
 - **Paper Track end:** 2026-11-09 23:59 UTC.
 - **M1 timebox end:** 2026-09-02.
@@ -60,46 +61,78 @@ Synthetic split regression checks produced exactly 60/30/30 and 700/150/150 for 
 
 ### Public baseline landscape at 2026-08-24
 
-Kaggle's public Code page showed public notebook scores roughly in the 29–31% range, including 31.39 for `ARC2 vanilla exact` and 31.11 for NVARC/TRM variants. These are third-party public scores and are **not yet our reproduced results**.
+Current Kaggle Code page shows:
+- `ARC2 vanilla exact`: **31.39** public score;
+- `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
+- `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**;
+- `BlackCat Stable Anchor — NVARC Guard`: current page reports **26.81**, with **28.89** as its historical best (V4), runtime about 24m48s on L4 x4.
 
-### B0 — pipeline anchor
+These are third-party public scores and are **not yet our reproduced results**.
 
-Selected first reproduction:
+### B0 — Kaggle pipeline anchor
+
+Selected first user-side reproduction:
 
 `BlackCat Stable Anchor — NVARC Guard`
 
-Reason: public, directly copyable, NVARC-derived, L4x4 runtime reported around 25 minutes, and reported best public score 28.89.
+Reason: direct public notebook, NVARC-derived, known L4 x4 runtime around 25 minutes, and sufficient to verify the complete account/notebook/model/submission pipeline before we reproduce the ~31% frontier.
 
-First run policy: unchanged notebook. We want a clean account/notebook/model/submission anchor before changing any mechanism.
+First run policy: unchanged notebook. Record the exact notebook version used, because the current public version and historical best differ.
 
 Detailed protocol: `docs/M1_BASELINE_AUDIT.md`.
+
+### S0 — compact symbolic baseline
+
+Implemented on `main`:
+- whole-grid D4 transforms with exact demonstration verification and color remapping;
+- non-background crop hypotheses;
+- connected-component extraction under 4/8-connectivity and monochrome/all-foreground grouping;
+- generic largest/smallest/top/bottom/left/right selectors;
+- integer cell scaling;
+- constant-output hypothesis;
+- deterministic complexity ranking;
+- two distinct predictions when verified hypotheses permit;
+- regression tests;
+- offline evaluator that strips test outputs before inference;
+- GitHub Actions CI;
+- GitHub Actions public-development benchmark using the official `arcprize/ARC-AGI-2` repository and the frozen 60/30/30 split.
+
+S0 is intentionally a reference solver rather than the final architecture. Its key later metric is complementarity with neural/TRM errors, not standalone score alone.
+
+Documentation: `docs/M1_SYMBOLIC_BASELINE.md`.
+
+## Compute policy
+
+- **GitHub Actions:** deterministic unit/regression tests and fast CPU symbolic development benchmark.
+- **Ryzen 9:** later large CPU search, synthetic generation, profiling and ablations where local parallelism helps.
+- **Kaggle L4 x4 / competition compute:** neural baselines, heavy hybrid runs and all final competition-valid executions.
+
+The final solution must fit Kaggle limits even when the Ryzen 9 is used to discover or optimize it.
 
 ## Repository visibility decision
 
 **Keep `pmartins87/ARC` PUBLIC through M1.**
 
-This phase contains infrastructure, public baselines, reproduction methodology, and other material whose competitive secrecy value is low. Public visibility is useful for CI/reproducibility.
+This phase contains infrastructure, public baselines, reproduction methodology, and material whose competitive secrecy value is low. Public visibility is useful for CI/reproducibility.
 
-Important qualification: follower count does not protect a public repository from GitHub search/indexing.
+Follower count does not protect a public repository from GitHub search/indexing.
 
 **Privacy trigger:** before committing a genuinely original competitive mechanism, unpublished ablation result, or material improvement that we would not want copied, reassess visibility. The default at that trigger is to move private until the required open-source/writeup window.
 
-This means there is no need to change visibility now.
-
-## Immediate actions
+## Immediate gates
 
 ### User-side
-1. Run B0 unchanged on Kaggle using the required accelerator/settings.
+1. Run B0 unchanged on Kaggle.
 2. Submit it to the competition.
-3. Record/send public score and runtime.
+3. Record/send exact notebook version, public score and runtime.
 
-### Research-side after B0
-1. reproduce one ~31.11–31.39 public frontier notebook;
-2. isolate TRM marginal contribution where possible;
-3. establish/reproduce a symbolic baseline;
-4. compare exact-solve overlap and runtime;
+### Research-side
+1. obtain/record S0 CI test status and development score/runtime;
+2. reproduce one ~31.11–31.39 public frontier notebook after B0;
+3. isolate TRM marginal contribution where feasible;
+4. compare neural vs symbolic exact-solve overlap on public offline material;
 5. close M1 with a baseline/error map;
-6. decide repository visibility before the first novel M2/M3 commit.
+6. decide repository visibility before the first novel competitive commit.
 
 ## Finite-project rule
 
