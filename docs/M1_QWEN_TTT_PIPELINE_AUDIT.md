@@ -135,9 +135,18 @@ Our clean N1 local execution produced:
 - valid `submission.json`;
 - 25m29s notebook runtime;
 - L4 x4 execution;
-- no environment failure.
+- no environment failure;
+- 120 task IDs / 172 output slots in the local file.
 
-This proves the local public-evaluation pipeline works. The competition rerun score remains the external generalization gate.
+The artifact audit then showed that this local/non-rerun file is intentionally incomplete as a performance artifact:
+- **167/172 output slots are `[[0]]` placeholders in both attempts**;
+- only **5 generated outputs across 4 tasks** are present;
+- on those generated outputs pass@1 is **3/5** and pass@2 is **4/5**;
+- one exact solve is rescued exclusively by attempt 2.
+
+So Version 1 proves that the local pipeline works and provides a small pass@2-diversity smoke signal, but it does **not** provide a full N1 public-evaluation error map. The competition rerun score remains the external reproduction gate.
+
+A second provenance issue was discovered: the current official GitHub evaluation directory disagrees with the Kaggle submission schema on test-pair counts for five task IDs. Any full public audit must pin the exact Kaggle dataset version.
 
 ## M1 measurement contract for this family
 
@@ -153,7 +162,7 @@ Before modifying the backbone, obtain as many of the following as the public art
 - number of unique canonical candidates per output;
 - per-task runtime / timeout coverage.
 
-If only `submission.json` is available, we can still recover the first four and construct an error taxonomy. Candidate-oracle metrics require the richer inference dump.
+A `submission.json` supports those metrics only when it contains real predictions for the relevant tasks. The N1 local smoke file does not; candidate-oracle metrics still require the richer inference dump.
 
 ## Current decision pressure
 
@@ -163,8 +172,15 @@ Public evidence makes three broad routes distinguishable:
 2. **Candidate search / refinement changes** — target the probability that the truth enters the pool.
 3. **Selection/diversity changes** — target the gap between a good pool and the two submitted attempts.
 
-M1 does **not** choose an original mechanism yet. The first M2/M3 hypothesis must be selected only after N1 task-level error evidence is available. That is also the repository-visibility trigger: the specific original mechanism should not be committed publicly before the privacy decision.
+M1 does **not** choose an original mechanism yet. The first M2/M3 hypothesis must be selected only after enough task-level evidence exists to avoid tuning to four smoke tasks. That is also the repository-visibility trigger: the specific original mechanism should not be committed publicly before the privacy decision.
 
 ## Immediate data needed
 
-The highest-information low-cost artifact is the 23 KB `submission.json` produced by N1 Version 1 on the public evaluation set. With that single file, the project can score N1 locally against the official 120-task public evaluation, restrict analysis to the frozen 60-task development split, and classify exact errors without another GPU run.
+The N1 local `submission.json` gate is closed as **smoke-only evidence**. The next low-cost evidence is the hidden Kaggle rerun score already in progress.
+
+For task-level mechanism selection, M1 now needs either:
+- a pinned frozen/full public-evaluation run that emits real predictions and, ideally, candidate dumps;
+- a public inference artifact with compatible task/version provenance;
+- or a documented PARTIAL result if neither is available inside the M1 timebox.
+
+Do not launch another GPU run merely because the original audit expected one. Any additional run must answer a specific generation/selection/coverage question and must be worth its manual and compute cost.
