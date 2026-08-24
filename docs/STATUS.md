@@ -20,10 +20,29 @@ Our clean copy:
 - runtime: **25m29s**;
 - accelerator: **GPU L4 x4**;
 - valid `submission.json` generated;
-- Kaggle competition submission dialog reached with Version 1 and `submission.json` selected;
-- hidden competition rerun score: **PENDING / UNCONFIRMED**.
+- Kaggle competition submission was accepted for the private rerun;
+- hidden competition rerun score: **PENDING / IN PROGRESS**.
 
 Reference public notebook score at the 2026-08-24 snapshot: **31.39%**. This is third-party reference evidence until our rerun result arrives.
+
+### Local smoke-output audit
+
+The local/non-rerun `submission.json` is now audited and is **not a full 120-task performance artifact**:
+- 120 task IDs / 172 output slots;
+- **167/172** slots are `[[0]]` placeholders in both attempts;
+- only **5 output slots across 4 tasks** contain generated candidates.
+
+On those five generated outputs, against matching current official task outputs:
+- pass@1: **3/5 = 60%**;
+- pass@2: **4/5 = 80%**;
+- one exact solve comes exclusively from attempt 2 (`36a08778[1]`);
+- generated-attempt duplicate rate: **0/5**.
+
+This is useful only as smoke evidence that the pipeline works and that pass@2 diversity can rescue exact solves. It must **not** be interpreted as the full N1 score.
+
+A provenance mismatch was also discovered: the current official GitHub evaluation set has different test-pair counts from the Kaggle submission schema for five task IDs (`4a21e3da`, `abc82100`, `faa9f03d`, `b6f77b65`, `f560132c`). Future full public-evaluation audits must pin the Kaggle dataset version rather than silently substitute the current GitHub directory.
+
+Experiments: `experiments/E0001_PENDING_N1_arc2_vanilla_exact.md` and `experiments/E0004_20260824_n1_local_smoke_audit.md`.
 
 BlackCat/N0 is now fallback only and should not consume a run if N1 is accepted.
 
@@ -102,9 +121,9 @@ No new run or Ryzen work is required now. The only useful user-side evidence is 
 
 ### Research-side
 
-1. close the C0 provenance audit without spending GPU;
+1. treat E0004 as smoke evidence only and do not tune to its four generated tasks;
 2. decide whether one N2 current NVARC/TRM run has enough information value to justify the quota;
-3. obtain comparable task-level predictions where possible;
+3. seek comparable task-level predictions or a bounded frozen public-evaluation run where the exact dataset version is pinned;
 4. measure overlap/oracle union rather than raw score alone;
 5. close M1 **PASS or PARTIAL by 2026-09-02**;
 6. freeze the first M2/M3 research hypothesis and trigger repository-visibility review before original competitive code.
