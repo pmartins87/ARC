@@ -33,6 +33,12 @@ jobs:
           ref: 83a22218024d46273eb32b769a906340202ffb4d
           path: external-compressarc
 
+      - name: Checkout official ARC-AGI-2 task data
+        uses: actions/checkout@v4
+        with:
+          repository: arcprize/ARC-AGI-2
+          path: official-arc-agi-2
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -42,31 +48,33 @@ jobs:
       - name: Install probe dependency
         run: python -m pip install 'numpy>=2,<3'
 
-      - name: Create our frozen 60/30/30 evaluation split
+      - name: Create frozen split from official 120-task ARC-AGI-2 evaluation
         run: >-
           python scripts/make_split.py
-          external-compressarc/dataset/arc-agi_evaluation_challenges.json
+          official-arc-agi-2/data/evaluation
           experiments/compressarc_eval_split_v1.json
           --profile evaluation
           --seed arc-2026-v1
 
-      - name: Probe full public evaluation artifact at final stored iteration
+      - name: Probe official ARC-AGI-2 public evaluation subset
         run: >-
           python scripts/probe_compressarc_artifact.py
           external-compressarc/results_for_the_blog_post/predictions_evaluation.npz
           external-compressarc/dataset/arc-agi_evaluation_challenges.json
           external-compressarc/dataset/arc-agi_evaluation_solutions.json
-          --json-out experiments/compressarc_public_full_final.json
+          --official-task-dir official-arc-agi-2/data/evaluation
+          --json-out experiments/compressarc_arcagi2_public_full_final.json
 
-      - name: Probe frozen development split only
+      - name: Probe frozen 60-task development split only
         run: >-
           python scripts/probe_compressarc_artifact.py
           external-compressarc/results_for_the_blog_post/predictions_evaluation.npz
           external-compressarc/dataset/arc-agi_evaluation_challenges.json
           external-compressarc/dataset/arc-agi_evaluation_solutions.json
+          --official-task-dir official-arc-agi-2/data/evaluation
           --manifest experiments/compressarc_eval_split_v1.json
           --split development
-          --json-out experiments/compressarc_public_dev_final.json
+          --json-out experiments/compressarc_arcagi2_public_dev_final.json
 
       - name: Upload source-grounded reports
         uses: actions/upload-artifact@v4
@@ -74,5 +82,5 @@ jobs:
           name: compressarc-public-probe
           path: |
             experiments/compressarc_eval_split_v1.json
-            experiments/compressarc_public_full_final.json
-            experiments/compressarc_public_dev_final.json
+            experiments/compressarc_arcagi2_public_full_final.json
+            experiments/compressarc_arcagi2_public_dev_final.json
