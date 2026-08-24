@@ -1,6 +1,18 @@
-# Status
+# ARC Prize 2026 — Project Status
 
 Last updated: 2026-08-24
+
+## Executive state
+
+- **Current milestone:** M1 — Reproduce competitive baselines — **ACTIVE**.
+- **Completed:** M0 — Foundation and rules freeze — **PASS**.
+- **Current gate:** reproduce the 2026 public baseline frontier and establish a score/runtime/complementarity table containing at least one serious neural and one symbolic baseline.
+- **Current experiment:** B0 — unchanged `BlackCat Stable Anchor — NVARC Guard` reproduction.
+- **Primary competition end:** 2026-11-02 23:59 UTC.
+- **Paper Track end:** 2026-11-09 23:59 UTC.
+- **M1 timebox end:** 2026-09-02.
+
+The finite roadmap and project definition-of-DONE are in `docs/ROADMAP.md`.
 
 ## Competition enrollment
 
@@ -12,32 +24,17 @@ Working conclusion: both enrollments appear successful. Re-verify Kaggle account
 
 ## Deadlines snapshot
 
-ARC-AGI-2 official timeline:
+ARC-AGI-2:
 - Entry/team merger deadline: 2026-10-26 23:59 UTC.
 - Final submission deadline: 2026-11-02 23:59 UTC.
 - Winners announcement: 2026-12-04.
 
 Paper Track:
-- Current live Kaggle UI and current Kaggle competition page both show **2026-11-09 23:59 UTC** (18:59 GMT-5).
+- Current live Kaggle UI and current competition page show **2026-11-09 23:59 UTC**.
 
-## Competition mechanics frozen in M0
+## M0 — PASS
 
-- Submission filename: `submission.json`.
-- Exactly two predictions (`attempt_1`, `attempt_2`) per test output.
-- Exact-grid match only.
-- Score is averaged over test outputs.
-- Kaggle notebook rerun; no internet.
-- CPU/GPU notebook runtime <= 12h.
-- L4x4 pool is available to this competition; 96 GB total GPU memory is advertised.
-- Freely/publicly available external data and pretrained models are allowed under current Kaggle code requirements.
-- Prize-eligible solutions must be open sourced.
-- Grand Prize artifacts must be attached/open sourced within the competition writeup window.
-
-## Repository state
-
-### M0 foundation — PASS
-
-PR #1 was squash-merged to `main`.
+PR #1 was merged to `main`.
 
 Implemented/documented:
 - exact pass@2 scorer;
@@ -45,56 +42,65 @@ Implemented/documented:
 - identity smoke baseline;
 - Python project/test scaffold;
 - research/leakage protocol;
-- gate-driven roadmap;
-- state-of-the-art map;
-- experiment ledger contract.
+- experiment ledger contract;
+- initial state-of-the-art map;
+- competition mechanics/deadline snapshot.
 
 Initial local regression suite: **4/4 PASS** before M0 merge.
 
-### M1 evaluation protocol — active
+## M1 — ACTIVE
 
-We corrected the benchmark hierarchy after the baseline audit:
-- the 1,000 training tasks are uncalibrated and are primarily training/development material;
-- the 120 public evaluation tasks are calibrated to the hidden evaluation distributions and are therefore our primary public generalization benchmark;
-- the operational evaluation split is now 60 eval-development / 30 eval-validation / 30 eval-heldout;
-- the split generator produces exact deterministic counts and carries a seed/profile in the manifest.
+The benchmark hierarchy was corrected during the baseline audit:
+- 1,000 training tasks are uncalibrated training/development material;
+- 120 public evaluation tasks are the main public proxy for hidden ARC-AGI-2 generalization;
+- operational evaluation split: 60 eval-development / 30 eval-validation / 30 eval-heldout;
+- split generator is deterministic and records seed/profile.
 
-The split logic was checked against synthetic 120- and 1,000-ID sets, yielding exactly 60/30/30 and 700/150/150 respectively.
+Synthetic split regression checks produced exactly 60/30/30 and 700/150/150 for 120- and 1,000-ID inputs respectively.
 
-## Important competitive risk
+### Public baseline landscape at 2026-08-24
 
-The repository is currently **public**. ARC requires open sourcing for prize eligibility, but not immediate publication during active research. To avoid donating novel competitive work before submission, the preferred posture is:
+Kaggle's public Code page showed public notebook scores roughly in the 29–31% range, including 31.39 for `ARC2 vanilla exact` and 31.11 for NVARC/TRM variants. These are third-party public scores and are **not yet our reproduced results**.
 
-1. keep the repository private during active competitive development;
-2. preserve full commit history and reproducibility internally;
-3. make required code/methods public for the prize/writeup window.
+### B0 — pipeline anchor
 
-Until visibility is changed, do not commit a genuinely novel competitive mechanism in full detail.
-
-## Current public baseline landscape
-
-At the 2026-08-24 audit, Kaggle's public Code page shows public notebook scores in roughly the 29–31% range, including 31.39 for `ARC2 vanilla exact` and 31.11 for two NVARC/TRM variants. These are third-party reported scores and have not yet been reproduced by us.
-
-## Active experiment: B0 pipeline anchor
-
-Selected first reproduction target:
+Selected first reproduction:
 
 `BlackCat Stable Anchor — NVARC Guard`
 
-Reason: public, directly copyable, NVARC-derived, L4x4 runtime around 25 minutes, and reported best public score 28.89. The first run must be unchanged so it establishes a clean account/notebook/model/submission baseline.
+Reason: public, directly copyable, NVARC-derived, L4x4 runtime reported around 25 minutes, and reported best public score 28.89.
+
+First run policy: unchanged notebook. We want a clean account/notebook/model/submission anchor before changing any mechanism.
 
 Detailed protocol: `docs/M1_BASELINE_AUDIT.md`.
 
-## Next user-side action
+## Repository visibility decision
 
-1. Change repository visibility to **Private** before we begin committing novel competitive mechanisms.
-2. On Kaggle, copy and run the B0 baseline unchanged, then submit it and record/send the resulting score and runtime.
+**Keep `pmartins87/ARC` PUBLIC through M1.**
 
-## Next research-side action
+This phase contains infrastructure, public baselines, reproduction methodology, and other material whose competitive secrecy value is low. Public visibility is useful for CI/reproducibility.
 
-After B0:
-- reproduce one 31.11–31.39 public frontier notebook;
-- isolate TRM marginal contribution;
-- build/reproduce a symbolic baseline;
-- compare solved-task overlap and runtime;
-- only then freeze the first novel hybrid hypothesis.
+Important qualification: follower count does not protect a public repository from GitHub search/indexing.
+
+**Privacy trigger:** before committing a genuinely original competitive mechanism, unpublished ablation result, or material improvement that we would not want copied, reassess visibility. The default at that trigger is to move private until the required open-source/writeup window.
+
+This means there is no need to change visibility now.
+
+## Immediate actions
+
+### User-side
+1. Run B0 unchanged on Kaggle using the required accelerator/settings.
+2. Submit it to the competition.
+3. Record/send public score and runtime.
+
+### Research-side after B0
+1. reproduce one ~31.11–31.39 public frontier notebook;
+2. isolate TRM marginal contribution where possible;
+3. establish/reproduce a symbolic baseline;
+4. compare exact-solve overlap and runtime;
+5. close M1 with a baseline/error map;
+6. decide repository visibility before the first novel M2/M3 commit.
+
+## Finite-project rule
+
+A milestone that misses its gate is marked `PARTIAL`; the best working artifact is carried forward and the project advances. No phase can consume the whole schedule. No new architecture enters after the M6 freeze on 2026-10-23. ARC-AGI-2 R&D stops at the final code deadline; Paper Track work stops at the paper deadline; M9 is administration/outcome recording only.
