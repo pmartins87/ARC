@@ -6,9 +6,9 @@ Last updated: 2026-08-24
 
 - **Current milestone:** M1 — Reproduce competitive baselines — **ACTIVE**.
 - **Completed:** M0 — Foundation and rules freeze — **PASS**.
-- **Current gate:** establish a reproducible score/runtime/complementarity table containing a competitive neural baseline and an independent symbolic baseline.
-- **User-side experiment:** B0 — unchanged `BlackCat Stable Anchor — NVARC Guard` Kaggle reproduction.
-- **Research-side experiment:** S0 — compact verified symbolic baseline — implementation complete; measured development benchmark pending/automated through GitHub Actions.
+- **Current gate:** reproduce a competitive neural/NVARC-family baseline and obtain a materially stronger symbolic/program-synthesis reference; then build an error/complementarity map.
+- **User-side experiment:** B0 — unchanged `BlackCat Stable Anchor — NVARC Guard` Kaggle reproduction — **PENDING USER RUN**.
+- **Research-side experiment:** S0 — compact verified symbolic baseline — **MEASURED / REJECT as standalone**.
 - **Primary competition end:** 2026-11-02 23:59 UTC.
 - **Paper Track end:** 2026-11-09 23:59 UTC.
 - **M1 timebox end:** 2026-09-02.
@@ -47,17 +47,15 @@ Implemented/documented:
 - initial state-of-the-art map;
 - competition mechanics/deadline snapshot.
 
-Initial local regression suite: **4/4 PASS** before M0 merge.
-
 ## M1 — ACTIVE
 
-The benchmark hierarchy was corrected during the baseline audit:
-- 1,000 training tasks are uncalibrated training/development material;
-- 120 public evaluation tasks are the main public proxy for hidden ARC-AGI-2 generalization;
-- operational evaluation split: 60 eval-development / 30 eval-validation / 30 eval-heldout;
-- split generator is deterministic and records seed/profile.
+### Evaluation discipline
 
-Synthetic split regression checks produced exactly 60/30/30 and 700/150/150 for 120- and 1,000-ID inputs respectively.
+- 1,000 training tasks: uncalibrated training/development material.
+- 120 public evaluation tasks: primary public proxy for hidden ARC-AGI-2 generalization.
+- operational frozen split: **60 eval-development / 30 eval-validation / 30 eval-heldout**;
+- seed/profile are recorded in the manifest;
+- continuous iteration is allowed only on the 60-task development split.
 
 ### Public baseline landscape at 2026-08-24
 
@@ -65,9 +63,9 @@ Current Kaggle Code page shows:
 - `ARC2 vanilla exact`: **31.39** public score;
 - `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
 - `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**;
-- `BlackCat Stable Anchor — NVARC Guard`: current page reports **26.81**, with **28.89** as its historical best (V4), runtime about 24m48s on L4 x4.
+- `BlackCat Stable Anchor — NVARC Guard`: current page reports **26.81**, historical best **28.89 (V4)**, runtime about 24m48s on L4 x4.
 
-These are third-party public scores and are **not yet our reproduced results**.
+These are third-party public scores and are not yet our reproduced results.
 
 ### B0 — Kaggle pipeline anchor
 
@@ -75,49 +73,52 @@ Selected first user-side reproduction:
 
 `BlackCat Stable Anchor — NVARC Guard`
 
-Reason: direct public notebook, NVARC-derived, known L4 x4 runtime around 25 minutes, and sufficient to verify the complete account/notebook/model/submission pipeline before we reproduce the ~31% frontier.
-
-First run policy: unchanged notebook. Record the exact notebook version used, because the current public version and historical best differ.
+First run policy: unchanged notebook. Record exact source version, L4 x4 runtime and public score. B0 exists to prove the account/notebook/model/submission path before B1 targets the ~31% frontier.
 
 Detailed protocol: `docs/M1_BASELINE_AUDIT.md`.
 
-### S0 — compact symbolic baseline
+### S0 — compact symbolic baseline — REJECT as standalone
 
-Implemented on `main`:
-- whole-grid D4 transforms with exact demonstration verification and color remapping;
-- non-background crop hypotheses;
-- connected-component extraction under 4/8-connectivity and monochrome/all-foreground grouping;
-- generic largest/smallest/top/bottom/left/right selectors;
-- integer cell scaling;
-- constant-output hypothesis;
-- deterministic complexity ranking;
-- two distinct predictions when verified hypotheses permit;
-- regression tests;
-- offline evaluator that strips test outputs before inference;
-- GitHub Actions CI;
-- GitHub Actions public-development benchmark using the official `arcprize/ARC-AGI-2` repository and the frozen 60/30/30 split.
+A PR-triggered GitHub Actions benchmark is now working, so symbolic changes can be measured before merge on the frozen development split.
 
-S0 is intentionally a reference solver rather than the final architecture. Its key later metric is complementarity with neural/TRM errors, not standalone score alone.
+Measured result at commit `a0b31d0a7afbee3edbcc7b6c411bd99e5c0d0ce1`:
+- regression CI: **13/13 PASS** after correcting the constant-output ranking bug;
+- development tasks: 60;
+- test outputs: 82;
+- pass@1: **0.0%**;
+- pass@2: **0.0%**;
+- fitted exact hypotheses: **0 across all 60 tasks**;
+- runtime: **14.78 s** on GitHub Actions CPU.
 
-Documentation: `docs/M1_SYMBOLIC_BASELINE.md`.
+Conclusion: S0 is too shallow to count as the serious symbolic M1 baseline. It remains as a lower-bound/regression instrument. We will not extend M1 by blindly enumerating more primitives.
+
+Experiment: `experiments/E0002_20260824_s0_symbolic_dev.md`.
+
+### Aggregate development profile
+
+Using training demonstrations only (no test outputs):
+- 39/60 tasks preserve input/output dimensions in every demonstration;
+- 17/60 consistently shrink area; 1/60 consistently enlarges area;
+- 52/60 always keep output colors within the input color set;
+- 32/60 preserve the exact color set;
+- 22/60 consistently remove colors;
+- 7/60 consistently introduce colors.
+
+The main gap is therefore contextual/compositional transformation rather than basic geometry/color bookkeeping.
 
 ## Compute policy
 
-- **GitHub Actions:** deterministic unit/regression tests and fast CPU symbolic development benchmark.
-- **Ryzen 9:** later large CPU search, synthetic generation, profiling and ablations where local parallelism helps.
-- **Kaggle L4 x4 / competition compute:** neural baselines, heavy hybrid runs and all final competition-valid executions.
+- **GitHub Actions:** deterministic tests, aggregate profiling and fast CPU symbolic development measurements.
+- **Ryzen 9:** later large CPU search, synthetic generation, profiling and ablations where local parallelism materially helps.
+- **Kaggle L4 x4:** neural baselines, heavy hybrid runs and all final competition-valid executions.
 
-The final solution must fit Kaggle limits even when the Ryzen 9 is used to discover or optimize it.
+The final solution must fit Kaggle limits even when the Ryzen 9 helps discover it.
 
 ## Repository visibility decision
 
 **Keep `pmartins87/ARC` PUBLIC through M1.**
 
-This phase contains infrastructure, public baselines, reproduction methodology, and material whose competitive secrecy value is low. Public visibility is useful for CI/reproducibility.
-
-Follower count does not protect a public repository from GitHub search/indexing.
-
-**Privacy trigger:** before committing a genuinely original competitive mechanism, unpublished ablation result, or material improvement that we would not want copied, reassess visibility. The default at that trigger is to move private until the required open-source/writeup window.
+M1 contains infrastructure, public baseline reproduction and diagnostic work whose secrecy value is low. Reassess before the first genuinely original competitive mechanism or unpublished material improvement is committed.
 
 ## Immediate gates
 
@@ -127,12 +128,10 @@ Follower count does not protect a public repository from GitHub search/indexing.
 3. Record/send exact notebook version, public score and runtime.
 
 ### Research-side
-1. obtain/record S0 CI test status and development score/runtime;
-2. reproduce one ~31.11–31.39 public frontier notebook after B0;
-3. isolate TRM marginal contribution where feasible;
-4. compare neural vs symbolic exact-solve overlap on public offline material;
-5. close M1 with a baseline/error map;
-6. decide repository visibility before the first novel competitive commit.
+1. close/merge the S0 measurement PR after green checks and ledger/status capture;
+2. audit a materially stronger published symbolic/program-synthesis reference (SOAR / CompressARC / licensed Kaggle equivalent) without letting M1 become an implementation sink;
+3. prepare B1 frontier reproduction target and comparison protocol;
+4. after B0/B1, compare neural predictions with symbolic/program-synthesis coverage and freeze the first evidence-based research hypothesis.
 
 ## Finite-project rule
 
