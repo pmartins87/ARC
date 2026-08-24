@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/arcsolver/symbolic.py'
       - 'scripts/evaluate_symbolic.py'
+      - 'scripts/profile_dev_tasks.py'
       - 'scripts/make_split.py'
       - '.github/workflows/symbolic-dev-benchmark.yml'
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - 'src/arcsolver/symbolic.py'
       - 'scripts/evaluate_symbolic.py'
+      - 'scripts/profile_dev_tasks.py'
       - 'scripts/make_split.py'
       - '.github/workflows/symbolic-dev-benchmark.yml'
 
@@ -55,6 +57,14 @@ jobs:
           --split development
           --json-out experiments/symbolic_dev_report.json
 
+      - name: Profile development demonstrations
+        run: >-
+          python scripts/profile_dev_tasks.py
+          official-arc-agi-2/data/evaluation
+          experiments/evaluation_split_v1.json
+          --split development
+          --json-out experiments/symbolic_dev_profile.json
+
       - name: Upload benchmark report
         uses: actions/upload-artifact@v4
         with:
@@ -62,3 +72,4 @@ jobs:
           path: |
             experiments/evaluation_split_v1.json
             experiments/symbolic_dev_report.json
+            experiments/symbolic_dev_profile.json
