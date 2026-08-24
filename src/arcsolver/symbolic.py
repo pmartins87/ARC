@@ -323,7 +323,7 @@ def fit_hypotheses(task: Mapping[str, object]) -> list[Hypothesis]:
 
     if all(target == targets[0] for target in targets[1:]):
         frozen = tuple(tuple(row) for row in targets[0])
-        hypotheses.append(Hypothesis("constant", (frozen,), (), 45))
+        hypotheses.append(Hypothesis("constant", (frozen,), (), 10))
 
     for transform_index, transform in enumerate(D4):
         transformed = [D4[transform](grid) for grid in inputs]
