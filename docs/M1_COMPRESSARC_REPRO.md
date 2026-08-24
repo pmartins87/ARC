@@ -1,4 +1,4 @@
-# M1 CompressARC Reproduction Plan
+# M1 CompressARC Reference / Reproduction Decision
 
 Snapshot: 2026-08-24
 
@@ -8,58 +8,43 @@ Snapshot: 2026-08-24
 - Public Kaggle template: `https://www.kaggle.com/code/iliao2345/arc-agi-without-pretraining`
 - The Kaggle notebook itself is Apache-2.0 licensed.
 
-The authors explicitly describe the notebook as a template for benchmarking the ARC-AGI Without Pretraining method on ARC-AGI-2.
+CompressARC remains a useful methodological reference because it trains a fresh puzzle-specific model from scratch under a compression/MDL framing, which is materially different from the Qwen/NVARC lineage.
 
 ## Published execution evidence
 
-Kaggle currently exposes version 10 of 11 with:
-- runtime: **6m32s**;
-- accelerator: **L4 x4**;
-- competition input: ARC Prize 2025;
-- additional dataset: CompressARC.
+The historical Kaggle template ran on L4 x4 in roughly 6m32s. Published ARC-AGI-2 semi-private runs were low-single-digit and variable (`1.67, 2.50, 1.67, 2.50, 4.17`). ARC Prize 2025 separately summarized the method at roughly 4% ARC-AGI-2.
 
-The authors report five successful ARC-AGI-2 semi-private runs scoring:
+Its raw score is far below the current ~31% public Qwen/NVARC-derived frontier, so C0 is relevant only if it supplies **unique exact candidates**.
 
-`1.67, 2.50, 1.67, 2.50, 4.17`
+## Provenance audit of the public prediction artifact
 
-The variance is expected for a puzzle-specific stochastic training system. ARC Prize 2025 separately summarizes the paper method at roughly 4% ARC-AGI-2.
+We tested whether the authors' public `predictions_evaluation.npz` could give us C0 task-level coverage without a new GPU run.
 
-## Why this counts as the strong symbolic/MDL reference
+The shortcut is **REJECTED** for the current benchmark:
 
-CompressARC is materially different from S0:
-- it trains a new model from scratch on each puzzle;
-- it applies an MDL/compression objective rather than searching only a fixed shallow transform list;
-- it creates puzzle-specific internal representations;
-- it is fully self-contained once code/data are attached, which is compatible in principle with Kaggle's no-internet final execution model.
+- current official ARC-AGI-2 public evaluation: **120 tasks**;
+- task histories in the published CompressARC artifact source set: **400 tasks**;
+- current official tasks present in that source: **6**;
+- current official tasks missing: **114**.
 
-Its raw score is far below the ~31% neural public frontier, so it is a **reference for complementary reasoning**, not our expected final backbone.
+Therefore the public artifact cannot be scored or treated as task-level evidence for the current ARC-AGI-2 120-task evaluation set. The strict provenance probe fails closed rather than silently reporting a misleading score.
 
-## 2026 reproduction target C0
+Experiment: `experiments/E0003_20260824_compressarc_artifact_provenance.md`.
 
-Goal: run the public template against the 2026 ARC-AGI-2 competition input with the smallest necessary compatibility changes only.
+## M1 decision
 
-Acceptance evidence:
-1. exact source notebook version recorded;
-2. all attached code/data versions recorded;
-3. L4 x4 run completes offline;
-4. valid `submission.json` is emitted for the 2026 competition rerun;
-5. public score and runtime recorded;
-6. code changes limited to input-path/schema compatibility, not method tuning.
+C0 is now **PARTIAL as a current task-level baseline** and retained as a methodological reference.
 
-## Timebox / stop rule
+We will not spend a user Kaggle run on the historical template merely to reproduce a ~1.7–4.2% score. A current C0 run becomes justified only if later portfolio evidence gives a concrete reason to believe the distinct MDL/no-pretraining candidate distribution can add enough unique exact outputs to offset the run and integration cost.
 
-C0 is useful but **cannot block M1**.
-
-- Neural B1 reproduction has higher priority.
-- If adapting the historical notebook to the 2026 competition is not cleanly reproducible inside the M1 window, mark C0 `PARTIAL` and use the published ARC-AGI-2 evidence as the methodological reference.
-- Do not spend M1 optimizing CompressARC hyperparameters.
+This is a finite-project stop rule, not a claim that CompressARC is scientifically unimportant.
 
 ## Later relevance
 
-CompressARC's potentially reusable ideas for M3–M5 are:
+Potentially reusable ideas for M3–M5 remain:
 - single-puzzle learning;
 - MDL/simplicity pressure;
 - inference-time candidate collection;
 - puzzle-specific adaptation without external pretraining.
 
-Any later use must be justified by ablation against the competitive neural baseline.
+Any later use must be justified by controlled ablation against the competitive baseline and must fit the final Kaggle execution constraints.
