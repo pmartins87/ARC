@@ -3,7 +3,7 @@ name: Export Official ARC-AGI-2 Evaluation
 on:
   push:
     branches:
-      - research/m1-qwen-pipeline-audit
+      - main
     paths:
       - '.github/workflows/export-official-eval.yml'
   workflow_dispatch:
