@@ -1,0 +1,32 @@
+name: Export Official ARC-AGI-2 Evaluation
+
+on:
+  push:
+    branches:
+      - research/m1-qwen-pipeline-audit
+    paths:
+      - '.github/workflows/export-official-eval.yml'
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout official ARC-AGI-2
+        uses: actions/checkout@v4
+        with:
+          repository: arcprize/ARC-AGI-2
+          ref: main
+          path: official
+
+      - name: Verify evaluation set
+        run: |
+          test "$(find official/data/evaluation -maxdepth 1 -name '*.json' | wc -l)" -eq 120
+
+      - name: Upload official public evaluation tasks
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-arc-agi-2-evaluation
+          path: official/data/evaluation
+          if-no-files-found: error
