@@ -1,0 +1,58 @@
+name: Symbolic Dev Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/arcsolver/symbolic.py'
+      - 'scripts/evaluate_symbolic.py'
+      - 'scripts/make_split.py'
+      - '.github/workflows/symbolic-dev-benchmark.yml'
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Checkout ARC-AGI-2 public data
+        uses: actions/checkout@v4
+        with:
+          repository: arcprize/ARC-AGI-2
+          path: official-arc-agi-2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install -e '.[dev]'
+
+      - name: Create frozen public-evaluation split
+        run: >-
+          python scripts/make_split.py
+          official-arc-agi-2/data/evaluation
+          experiments/evaluation_split_v1.json
+          --profile evaluation
+          --seed arc-2026-v1
+
+      - name: Run development benchmark only
+        run: >-
+          python scripts/evaluate_symbolic.py
+          official-arc-agi-2/data/evaluation
+          --manifest experiments/evaluation_split_v1.json
+          --split development
+          --json-out experiments/symbolic_dev_report.json
+
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: symbolic-dev-report
+          path: |
+            experiments/evaluation_split_v1.json
+            experiments/symbolic_dev_report.json
