@@ -6,11 +6,13 @@ Last updated: 2026-08-24
 
 - **Current milestone:** M1 — Reproduce competitive baselines — **ACTIVE**.
 - **Completed:** M0 — Foundation and rules freeze — **PASS**.
-- **Merged M1 evidence:** PR #3 — S0 symbolic measurement / stop-rule — **PASS and merged**.
-- **Current gate:** reproduce a competitive neural frontier baseline and obtain a bounded strong symbolic/MDL reference; then build an error/complementarity map.
-- **Next user-side run:** N1 — unchanged `ARC2 vanilla exact` — **PENDING USER RUN**.
-- **Fallback user-side run:** N0 — `BlackCat Stable Anchor — NVARC Guard` — only if N1 fails to establish the Kaggle pipeline.
-- **Research-side symbolic reference:** CompressARC C0 — **SELECTED / bounded reproduction plan prepared**.
+- **Merged M1 evidence:** S0 measurement/stop-rule, strong-baseline audit, complementarity analyzer, and 2026 SOTA refresh are on `main`.
+- **Current gate:** obtain N1 hidden rerun score, obtain one bounded distinct candidate source, then measure exact-output complementarity/selection ceiling.
+- **N1 local Kaggle execution:** unchanged `ARC2 vanilla exact` Version 1 — **COMPLETE**, 25m29s on L4 x4.
+- **N1 competition submission:** submission panel reached with Version 1 / `submission.json`; hidden rerun score **PENDING/UNCONFIRMED**.
+- **Fallback N0:** `BlackCat Stable Anchor — NVARC Guard` — skip unless N1 submission fails.
+- **Strong distinct reference:** CompressARC C0 — **SELECTED / timeboxed**.
+- **Controlled NVARC/TRM comparison:** N2 — **one run maximum after N1**, only if it yields comparable task-level evidence.
 - **Primary competition end:** 2026-11-02 23:59 UTC.
 - **Paper Track end:** 2026-11-09 23:59 UTC.
 - **M1 timebox end:** 2026-09-02.
@@ -20,10 +22,10 @@ The finite roadmap and project definition-of-DONE are in `docs/ROADMAP.md`.
 ## Competition enrollment
 
 User-side Kaggle screenshots show:
-- ARC Prize 2026 — ARC-AGI-2 with **Submit Prediction** available;
-- ARC Prize 2026 — Paper Track with **View Writeups** and the account message that no writeup has been created yet.
+- ARC Prize 2026 — ARC-AGI-2 with submission controls available;
+- ARC Prize 2026 — Paper Track with writeup controls and account-specific status.
 
-Working conclusion: both enrollments appear successful. Re-verify Kaggle account/identity/prize eligibility well before the entry deadline.
+Working conclusion: both enrollments appear successful. Re-verify identity/prize eligibility well before the entry deadline.
 
 ## Deadlines snapshot
 
@@ -36,8 +38,6 @@ Paper Track:
 - current live Kaggle UI and competition page show **2026-11-09 23:59 UTC**.
 
 ## M0 — PASS
-
-PR #1 was merged to `main`.
 
 Implemented/documented:
 - exact pass@2 scorer;
@@ -61,34 +61,34 @@ Implemented/documented:
 
 ### Public baseline landscape at 2026-08-24
 
-Current Kaggle Code page shows:
+Current Kaggle Code snapshot includes:
 - `ARC2 vanilla exact`: **31.39** public score;
 - `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
 - `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**;
-- `BlackCat Stable Anchor — NVARC Guard`: current page around **26.81**, historical best **28.89 (V4)**, runtime about 24m48s on L4 x4.
+- `BlackCat Stable Anchor — NVARC Guard`: current page around **26.81**, historical best **28.89 (V4)**.
 
-These are third-party public scores and are not yet our reproduced results.
+These are third-party public scores unless explicitly labeled as our run.
 
-### N1 — competitive Kaggle frontier — FIRST USER RUN
+### N1 — competitive Kaggle frontier
 
 `ARC2 vanilla exact`
 
-URL: `https://www.kaggle.com/code/sorenravn/arc2-vanilla-exact`
+Reference URL: `https://www.kaggle.com/code/sorenravn/arc2-vanilla-exact`
 
-Decision: **run N1 directly instead of spending the first run on the weaker BlackCat anchor.** A successful unchanged N1 run validates the same account/notebook/model/submission pipeline and simultaneously establishes our strongest public baseline. This removes one redundant user-side run from the finite project.
+Our clean copy:
+- Version 1 executed successfully;
+- runtime: **25m29s**;
+- accelerator: **GPU L4 x4**;
+- `submission.json` generated with 120 placeholder/public-evaluation tasks;
+- Kaggle submission dialog correctly selected our notebook, Version 1 and `submission.json`;
+- hidden competition rerun score is the remaining N1 evidence.
 
-Protocol: `docs/M1_KAGGLE_RUN_QUEUE.md`.
-
-### N0 — BlackCat — FALLBACK ONLY
-
-Retain the previously selected BlackCat notebook as a simpler recovery anchor if N1 fails for environment/input reasons. Skip N0 entirely if N1 submits successfully.
+This validates the local notebook/model/output pipeline. N0 is now fallback only.
 
 ### S0 — compact symbolic baseline — REJECT as standalone
 
-PR #3 was squash-merged after green CI/benchmark checks.
-
-Measured result on the frozen 60-task evaluation-development split:
-- regression CI: **13/13 PASS** after fixing the constant-output ranking bug;
+Measured on the frozen 60-task evaluation-development split:
+- regression CI: **13/13 PASS** after the constant-output ranking correction;
 - tasks: 60;
 - test outputs: 82;
 - pass@1: **0.0%**;
@@ -96,22 +96,50 @@ Measured result on the frozen 60-task evaluation-development split:
 - fitted exact hypotheses: **0 across all 60 tasks**;
 - runtime: **14.78 s** on GitHub Actions CPU.
 
-Conclusion: shallow D4/crop/component/scale/color-map search is not a serious ARC-AGI-2 evaluation solver. S0 remains only as a lower-bound/regression instrument.
+Conclusion: shallow D4/crop/component/scale/color-map search is not a serious ARC-AGI-2 solver. Retain only as a lower-bound/regression instrument.
 
 Experiment: `experiments/E0002_20260824_s0_symbolic_dev.md`.
 
-### Strong symbolic/MDL reference — CompressARC selected
+### NVARC audit — key decision
+
+NVARC 2025 shows that adding a solver with non-zero standalone accuracy may add **zero** final score when its correct candidates overlap the stronger solver or the final scorer fails to retain its unique candidates.
+
+Published NVARC evidence includes:
+- Qwen3 2B 21.53 -> 22.50 when TRM candidates were added;
+- stronger Qwen3 4B 27.22 -> 27.22 with the same general ensemble idea;
+- TRM unique solves existed, but Qwen rescoring did not always select them.
+
+Therefore M1 measures two separate ceilings:
+1. candidate discovery / oracle union;
+2. actual two-attempt selection efficiency.
+
+We will **not retrain TRM from scratch** in M1. N2, if run, will use a public checkpoint/notebook and must answer a complementarity question rather than reproduce old training compute.
+
+Full audit: `docs/M1_NVARC_AUDIT.md`.
+
+### Multi-solver portfolio instrumentation
+
+Pairwise complementarity is already on `main`. The current M1 branch adds a multi-solver oracle portfolio analyzer that records:
+- each solver's exact pass@2 coverage;
+- outputs unique vs all other components;
+- leave-one-out union loss;
+- oracle union ceiling;
+- deterministic greedy coverage order;
+- optional exact additive-runtime portfolio under declared budgets.
+
+This is measurement infrastructure, not a novel solver. It exists to prevent redundant components from consuming Kaggle time.
+
+### Strong distinct reference — CompressARC C0
 
 Preferred reference: `iliao2345/CompressARC`.
 
 Public evidence:
-- GitHub code: MIT license;
-- Kaggle template: Apache-2.0;
-- template runtime shown as **6m32s on L4 x4**;
-- authors explicitly intended the template for ARC-AGI-2 benchmarking;
-- five reported successful semi-private ARC-AGI-2 runs: **1.67, 2.50, 1.67, 2.50, 4.17**.
+- MIT-licensed source;
+- no-pretraining, per-puzzle neural compression/MDL approach;
+- published Kaggle-oriented execution path on L4 x4;
+- materially different inductive bias from N1.
 
-C0 will attempt a bounded 2026 compatibility reproduction. It cannot block M1; if adaptation is not clean by 2026-09-02, mark C0 `PARTIAL` and advance.
+C0 remains bounded: obtain comparable evidence if clean; do not optimize it inside M1. If compatibility/evidence is not clean by 2026-09-02, mark C0 `PARTIAL` and advance.
 
 Docs: `docs/M1_STRONG_SYMBOLIC_AUDIT.md` and `docs/M1_COMPRESSARC_REPRO.md`.
 
@@ -129,31 +157,35 @@ The dominant gap is contextual/compositional transformation rather than basic ge
 
 ## Compute policy
 
-- **GitHub Actions:** deterministic tests, aggregate profiling and fast CPU symbolic development measurements.
-- **Ryzen 9:** later large CPU search, synthetic generation, profiling and ablations where local parallelism materially helps.
-- **Kaggle L4 x4:** neural baselines, CompressARC-style GPU work, heavy hybrid runs and all final competition-valid executions.
+- **GitHub Actions:** tests, profiling, exact scoring and lightweight CPU measurements.
+- **Kaggle L4 x4:** neural baselines, C0/N2 bounded experiments, heavy hybrid runs and final-valid execution.
+- **Ryzen 9:** currently **NOT NEEDED**. Activate only when a measured CPU-parallel workload can improve the prize path (large search, synthetic generation, profiling/ablation).
 
-The final solution must fit Kaggle limits even when the Ryzen 9 helps discover it.
+The final solver must fit Kaggle even if the Ryzen later accelerates research.
 
 ## Repository visibility decision
 
-**Keep `pmartins87/ARC` PUBLIC through M1.**
+**Keep `pmartins87/ARC` PUBLIC through M1 measurement work.**
 
-M1 contains infrastructure, public baseline reproduction and diagnostic work whose secrecy value is low. Reassess before the first genuinely original competitive mechanism or unpublished material improvement is committed.
+The current branch contains public-source audit and generic measurement infrastructure. Before the first genuinely original competitive mechanism, unpublished ablation advantage, or material proprietary improvement is committed, trigger the visibility review. The default at that point is private until the required open-source window.
 
 ## Immediate gates
 
 ### User-side
-1. Copy/run/submit N1 (`ARC2 vanilla exact`) unchanged.
-2. Send the exact source/copied version, public score and runtime/status; a screenshot is sufficient.
-3. Run N0 only if N1 fails to establish a valid submission.
+
+Only one item remains for now:
+- when Kaggle returns the N1 competition result, send/record the hidden/public score screen.
+
+No Ryzen work and no additional notebook run is required until the research-side evidence says it is worth the quota.
 
 ### Research-side
-1. finalize the N1 comparison/experiment record template while the user run is pending;
-2. bound C0 CompressARC compatibility work rather than optimizing it;
-3. audit N1/NVARC resources after the reproduced run;
-4. after N1, choose one controlled TRM/NVARC comparison rather than accumulating redundant public notebooks;
-5. close M1 with a baseline/error map and freeze the first evidence-based research hypothesis.
+
+1. land NVARC audit + multi-solver portfolio instrumentation after green CI;
+2. finish bounded C0 evidence path;
+3. choose at most one N2 TRM/NVARC comparison if it adds information beyond N1;
+4. ingest comparable per-task outputs and compute candidate oracle union / redundancy;
+5. close M1 PASS or PARTIAL by 2026-09-02;
+6. freeze the first evidence-based M2/M3 hypothesis and trigger repository-visibility review before original competitive code.
 
 ## Finite-project rule
 
