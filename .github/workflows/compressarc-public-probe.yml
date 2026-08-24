@@ -1,4 +1,4 @@
-name: CompressARC Public Artifact Probe
+name: CompressARC Public Artifact Provenance
 
 on:
   workflow_dispatch:
@@ -17,11 +17,9 @@ on:
       - '.github/workflows/compressarc-public-probe.yml'
 
 jobs:
-  probe:
+  provenance:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      PYTHONHASHSEED: '0'
     steps:
       - name: Checkout ARC project
         uses: actions/checkout@v4
@@ -43,10 +41,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: pip
-
-      - name: Install probe dependency
-        run: python -m pip install 'numpy>=2,<3'
 
       - name: Create frozen split from official 120-task ARC-AGI-2 evaluation
         run: >-
@@ -56,31 +50,39 @@ jobs:
           --profile evaluation
           --seed arc-2026-v1
 
-      - name: Probe official ARC-AGI-2 public evaluation subset
-        run: >-
-          python scripts/probe_compressarc_artifact.py
-          external-compressarc/results_for_the_blog_post/predictions_evaluation.npz
-          external-compressarc/dataset/arc-agi_evaluation_challenges.json
-          external-compressarc/dataset/arc-agi_evaluation_solutions.json
-          --official-task-dir official-arc-agi-2/data/evaluation
-          --json-out experiments/compressarc_arcagi2_public_full_final.json
+      - name: Audit task-set provenance before any score claim
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
 
-      - name: Probe frozen 60-task development split only
-        run: >-
-          python scripts/probe_compressarc_artifact.py
-          external-compressarc/results_for_the_blog_post/predictions_evaluation.npz
-          external-compressarc/dataset/arc-agi_evaluation_challenges.json
-          external-compressarc/dataset/arc-agi_evaluation_solutions.json
-          --official-task-dir official-arc-agi-2/data/evaluation
-          --manifest experiments/compressarc_eval_split_v1.json
-          --split development
-          --json-out experiments/compressarc_arcagi2_public_dev_final.json
+          official_dir = Path('official-arc-agi-2/data/evaluation')
+          official_ids = {p.stem for p in official_dir.glob('*.json')}
+          challenges = json.loads(Path('external-compressarc/dataset/arc-agi_evaluation_challenges.json').read_text())
+          source_ids = set(challenges)
+          overlap = sorted(official_ids & source_ids)
+          missing = sorted(official_ids - source_ids)
+          source_only = sorted(source_ids - official_ids)
+          report = {
+              'official_arc_agi_2_evaluation_tasks': len(official_ids),
+              'compressarc_artifact_source_tasks': len(source_ids),
+              'overlap_tasks': len(overlap),
+              'missing_official_tasks': len(missing),
+              'overlap_task_ids': overlap,
+              'missing_official_task_ids': missing,
+              'source_only_task_count': len(source_only),
+              'verdict': 'INCOMPATIBLE_FOR_CURRENT_ARC_AGI_2_COVERAGE' if missing else 'FULL_OVERLAP',
+          }
+          Path('experiments/compressarc_public_artifact_provenance.json').write_text(
+              json.dumps(report, indent=2, sort_keys=True) + '\n'
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
 
-      - name: Upload source-grounded reports
+      - name: Upload provenance evidence
         uses: actions/upload-artifact@v4
         with:
-          name: compressarc-public-probe
+          name: compressarc-public-provenance
           path: |
             experiments/compressarc_eval_split_v1.json
-            experiments/compressarc_arcagi2_public_full_final.json
-            experiments/compressarc_arcagi2_public_dev_final.json
+            experiments/compressarc_public_artifact_provenance.json
