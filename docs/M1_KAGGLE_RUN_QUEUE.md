@@ -22,20 +22,34 @@ Experiment: `experiments/E0001_20260825_n1_arc2_vanilla_exact.md`.
 
 ## E0006 — Lightning + NVIDIA NVARC feasibility — NEXT HIGH-INFORMATION GPU GATE
 
-Purpose: determine whether `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16` can be deployed competition-validly on Kaggle **L4 x4** and whether the public NVIDIA ARC environment is worth a frozen-development experiment.
+Purpose: determine whether Nemotron 3.5 Lightning can be deployed competition-validly on Kaggle **L4 x4** and whether the public NVIDIA ARC environment is worth a frozen-development experiment.
+
+Preferred checkpoint:
+- `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4`;
+- L4 should use the supported W4A16 fallback execution path rather than native Blackwell NVFP4 arithmetic.
+
+BF16 remains a fallback/reference, not the first attachment attempt.
 
 This is **not a competition submission**. It should not consume leaderboard quota.
 
-### Gate A — inspect only
+### Gate A — inspect only — CURRENT
 
-1. Attach the Lightning checkpoint as a Kaggle Model/Input using the lowest-friction HF→Kaggle path.
-2. Fresh diagnostic notebook; GPU **L4 x4**; Internet **OFF**.
-3. Run `scripts/lightning_kaggle_smoke.py` in inspect mode.
-4. Capture GPU/package inventory and exact local model path.
+1. Import `notebooks/E0006_lightning_gate_a_kaggle.ipynb`.
+2. Attach the preferred NVFP4 Lightning checkpoint as a Kaggle Model/Input using the lowest-friction HF→Kaggle path.
+3. GPU **L4 x4**; Internet **OFF**.
+4. `Save Version -> Save & Run All`.
+5. Return `/kaggle/working/e0006_gate_a_inspect.json`.
 
-### Gate B — one bounded model load + one short generation
+PASS requires environment/model attachment only. It does not prove the model loads.
 
-Only if Gate A is compatible. Run `scripts/lightning_vllm_kaggle_smoke.py` with the frozen compatibility configuration from `docs/M1_LIGHTNING_SMOKE_PROTOCOL.md`.
+### Gate B — one bounded model load + one short generation — PREPARED
+
+Only after Gate A is reviewed and compatible.
+
+Standalone notebook:
+`notebooks/E0006_lightning_gate_b_kaggle.ipynb`
+
+It reuses the same attached checkpoint, auto-detects the NVFP4 ModelOpt quantization path, attempts TP4 vLLM load, performs one short local generation, records startup/runtime/GPU memory, writes JSON/log, then terminates the server.
 
 PASS requires a TP4 model load and one local generation without OOM/unsupported-kernel failure, with startup/runtime/memory evidence captured.
 
@@ -63,7 +77,7 @@ Methodologically useful, but current artifact provenance does not match the 2026
 
 ## User-side evidence
 
-For E0006 we prefer machine-readable smoke artifacts over screenshots. A screenshot is enough only for a UI/setup failure. The target files are:
-- `lightning_vllm_smoke.json`;
-- `lightning_vllm_serve.log`;
-- GPU/package inventory from inspect mode.
+For E0006 we prefer machine-readable smoke artifacts over screenshots. A screenshot is enough only for a UI/setup failure. Target files:
+- Gate A: `e0006_gate_a_inspect.json`;
+- Gate B: `e0006_gate_b_smoke.json`;
+- Gate B: `e0006_gate_b_vllm.log`.
