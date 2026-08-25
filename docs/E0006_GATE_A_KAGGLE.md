@@ -22,22 +22,27 @@ Despite the checkpoint name, L4 will not use native NVFP4 arithmetic. NVIDIA/vLL
 
 The BF16 checkpoint remains the higher-fidelity fallback/reference if later needed.
 
-## Minimal user sequence
+## Observed Kaggle/Hugging Face behavior
 
-1. Create/open a blank Kaggle notebook.
-2. `File -> Import Notebook -> Link` and paste the direct GitHub URL above.
-3. Attach `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4` as a Kaggle Model/Input if already available.
-4. If it is not searchable in `Add Input`, open the Hugging Face model page and choose `Use this model -> Kaggle`. This creates a **starter notebook containing code that references the HF model; it does not immediately attach the weights**.
-5. In that generated notebook, do **not** run the generated `pip install` / `from_pretrained` cells. Create a **Save Version** (prefer Quick Save/no execution when offered). Kaggle's documented HF integration uses this saved notebook reference to create the linked Kaggle model page.
-6. Return to the Gate A notebook and search `Add Input` again for the newly linked model page. Only proceed once the model is actually shown as an attached Input/Model.
-7. Set accelerator to **GPU L4 x4**.
-8. Set notebook Internet to **OFF**.
-9. `Save Version -> Save & Run All`.
-10. After completion, download only `/kaggle/working/e0006_gate_a_inspect.json` and return that tiny file to the project.
+The direct Hugging Face `Use this model -> Kaggle` path created only a starter notebook. A Quick Save did **not** create an attachable Kaggle Model. We then ran a tiny `hf_hub_download(..., filename="config.json")` reference successfully and saved another version; `Add Input` still returned only the user's own notebook rather than the Nemotron model. Therefore this automatic materialization path is classified **FAILED_FOR_THIS_CHECKPOINT / STOP** for E0006.
+
+Do not repeat the starter-notebook/search loop.
+
+## Current attachment path — cloud mirror
+
+Use a temporary Kaggle notebook with Internet ON to mirror the public Hugging Face checkpoint directly into a Kaggle Model owned by the user:
+
+1. Download the full HF repository with `huggingface_hub.snapshot_download` into the VM cache/scratch area, **not `/kaggle/working`**.
+2. Upload the resulting snapshot directory with `kagglehub.model_upload` using a Kaggle model handle under the user's account.
+3. The bytes move cloud-to-cloud; do not route the checkpoint through the user's PC.
+4. Once the Kaggle Model exists, return to `notebooks/E0006_lightning_gate_a_kaggle.ipynb`, attach that Kaggle Model in `Add Input`, set **L4 x4**, set Internet **OFF**, then `Save Version -> Save & Run All`.
+5. Return `/kaggle/working/e0006_gate_a_inspect.json` for review.
+
+Kaggle documents `/kaggle/working` saved output at up to 20 GB, so a large checkpoint mirror should not rely on notebook output persistence. KaggleHub is authenticated by default inside Kaggle notebooks and its supported `model_upload(<username>/<model>/<framework>/<variation>, local_model_dir)` API is the preferred upload mechanism.
 
 No ARC competition submission is made in this flow.
 
-## What the notebook verifies
+## What the Gate A notebook verifies
 
 - exactly four CUDA devices are visible;
 - each GPU exposes roughly 24 GiB;
@@ -51,13 +56,12 @@ No ARC competition submission is made in this flow.
 
 ## Model attachment fallback order
 
-1. Search Kaggle Models for the exact NVFP4 Lightning checkpoint.
-2. Use Hugging Face -> Kaggle integration to create the starter notebook, Save Version to trigger the linked Kaggle model page, then attach that page to Gate A.
-3. Use Kaggle's model/dataset import tooling from the public Hugging Face source if the linked page still cannot provide an attachable local model.
-4. If the quantized route cannot be materialized, repeat the attachment search with the BF16 reference.
-5. Only as a last resort route a large checkpoint through the user's PC.
+1. **Current:** cloud-to-cloud HF snapshot -> user-owned Kaggle Model via `kagglehub.model_upload`.
+2. If Kaggle refuses the large Model upload for a platform/quota reason, investigate a Kaggle Dataset/private artifact mirror only if competition rules permit it.
+3. If the quantized route itself is blocked, reconsider BF16 only if storage and deployment evidence still justify it.
+4. Only as a last resort route a large checkpoint through the user's PC.
 
-NVIDIA's NIM documentation reports model-cache sizes ranging from about **19 GB for NVFP4 to ~63 GB for BF16**, so the quantized route also reduces attachment/storage burden substantially.
+NVIDIA's current model card lists the checkpoint license as **OpenMDW-1.1**; preserve that provenance and do not relabel it as Apache-2.0.
 
 ## Gate B rule
 
