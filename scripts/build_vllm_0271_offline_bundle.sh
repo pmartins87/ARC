@@ -12,6 +12,7 @@ OUT_DIR="${1:-./vllm-0.27.1-cu129-wheels}"
 mkdir -p "$OUT_DIR"
 
 VLLM_URL="https://github.com/vllm-project/vllm/releases/download/v0.27.1/vllm-0.27.1%2Bcu129-cp38-abi3-manylinux_2_28_x86_64.whl"
+VLLM_EXPECTED_SHA256="bf0d52faa2a51e7a01c6856a7a8a2d1307fd0ff711415d34168a67ffac0fa47b"
 TORCH_INDEX="https://download.pytorch.org/whl/cu129"
 
 python - <<'PY'
@@ -28,7 +29,7 @@ python -m pip download \
   --extra-index-url "$TORCH_INDEX" \
   "$VLLM_URL"
 
-python - "$OUT_DIR" <<'PY'
+python - "$OUT_DIR" "$VLLM_EXPECTED_SHA256" <<'PY'
 from __future__ import annotations
 
 import hashlib
@@ -37,18 +38,33 @@ import sys
 from pathlib import Path
 
 root = Path(sys.argv[1])
+expected_vllm_sha = sys.argv[2]
 files = []
+vllm_matches = []
 for path in sorted(root.glob("*.whl")):
     h = hashlib.sha256()
     with path.open("rb") as fh:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
-    files.append({"name": path.name, "bytes": path.stat().st_size, "sha256": h.hexdigest()})
+    digest = h.hexdigest()
+    row = {"name": path.name, "bytes": path.stat().st_size, "sha256": digest}
+    files.append(row)
+    if path.name.startswith("vllm-0.27.1+cu129-"):
+        vllm_matches.append(row)
+
+if len(vllm_matches) != 1:
+    raise SystemExit(f"Expected exactly one vLLM 0.27.1+cu129 wheel, found {len(vllm_matches)}")
+if vllm_matches[0]["sha256"] != expected_vllm_sha:
+    raise SystemExit(
+        "Official vLLM wheel SHA-256 mismatch: "
+        f"expected {expected_vllm_sha}, got {vllm_matches[0]['sha256']}"
+    )
 
 manifest = {
     "purpose": "offline Kaggle dependency bundle for E0006",
     "vllm_release": "0.27.1",
     "vllm_cuda_variant": "cu129",
+    "vllm_official_release_sha256": expected_vllm_sha,
     "target_python": "3.12",
     "target_arch": "x86_64",
     "wheel_count": len(files),
@@ -56,7 +72,7 @@ manifest = {
     "files": files,
 }
 (root / "MANIFEST.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-print(json.dumps({k: manifest[k] for k in ("wheel_count", "total_bytes")}, indent=2))
+print(json.dumps({k: manifest[k] for k in ("wheel_count", "total_bytes", "vllm_official_release_sha256")}, indent=2))
 PY
 
 echo "Bundle written to: $OUT_DIR"
