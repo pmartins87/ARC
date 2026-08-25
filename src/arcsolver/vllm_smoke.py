@@ -18,11 +18,16 @@ class VLLMSmokeConfig:
     mamba_ssm_cache_dtype: str = "float16"
     enable_mamba_cache_stochastic_rounding: bool = True
     mamba_cache_philox_rounds: int | None = 5
+    mamba_cache_mode: str | None = None
+    mamba_ssu_algorithm: str | None = None
     reasoning_parser: str | None = "nemotron_v3"
     tool_call_parser: str | None = "qwen3_coder"
     enable_auto_tool_choice: bool = True
     trust_remote_code: bool = False
     dtype: str = "bfloat16"
+    quantization: str | None = None
+    linear_backend: str | None = None
+    moe_backend: str | None = None
     enforce_eager: bool = True
 
     def validate(self) -> None:
@@ -45,13 +50,13 @@ class VLLMSmokeConfig:
 
 
 def build_vllm_serve_command(config: VLLMSmokeConfig, *, executable: str = "vllm") -> list[str]:
-    """Build the conservative Lightning vLLM smoke command.
+    """Build a conservative Lightning vLLM smoke command.
 
-    The command follows NVIDIA's current Lightning 3.5 vLLM guidance where it
-    materially affects compatibility, but deliberately lowers context length,
-    disables speculative decoding, and enables eager execution for the first L4
-    feasibility gate. The H100 memory-constrained recipe uses float16 Mamba SSM
-    cache, which is also the conservative choice for 24 GiB L4s.
+    The compatibility path deliberately lowers context length, disables
+    speculative decoding, and enables eager execution. ``quantization`` and
+    backend overrides are optional so the same harness can test the BF16
+    reference or NVIDIA's smaller ModelOpt NVFP4 checkpoint executing through
+    W4A16 kernels on non-Blackwell hardware.
     """
     config.validate()
     cmd = [
@@ -71,12 +76,22 @@ def build_vllm_serve_command(config: VLLMSmokeConfig, *, executable: str = "vllm
         "--mamba-ssm-cache-dtype",
         config.mamba_ssm_cache_dtype,
     ]
+    if config.quantization:
+        cmd += ["--quantization", config.quantization]
+    if config.linear_backend:
+        cmd += ["--linear-backend", config.linear_backend]
+    if config.moe_backend:
+        cmd += ["--moe-backend", config.moe_backend]
     if config.mamba_backend:
         cmd += ["--mamba-backend", config.mamba_backend]
     if config.enable_mamba_cache_stochastic_rounding:
         cmd.append("--enable-mamba-cache-stochastic-rounding")
     if config.mamba_cache_philox_rounds is not None:
         cmd += ["--mamba-cache-philox-rounds", str(config.mamba_cache_philox_rounds)]
+    if config.mamba_cache_mode:
+        cmd += ["--mamba-cache-mode", config.mamba_cache_mode]
+    if config.mamba_ssu_algorithm:
+        cmd += ["--mamba-ssu-algorithm", config.mamba_ssu_algorithm]
     if config.max_model_len is not None:
         cmd += ["--max-model-len", str(config.max_model_len)]
     if config.enable_expert_parallel:
@@ -104,6 +119,8 @@ def classify_server_failure(log_tail: str, returncode: int | None) -> str:
         return "DEPENDENCY_MISSING"
     if "unrecognized arguments" in text or "no such option" in text:
         return "VLLM_VERSION_OR_FLAG_MISMATCH"
+    if "quantization" in text and any(token in text for token in ("unsupported", "not supported", "unknown")):
+        return "UNSUPPORTED_QUANTIZATION_PATH"
     if any(token in text for token in ("unsupported", "not implemented", "no kernel", "invalid device function")):
         return "UNSUPPORTED_KERNEL_OR_ARCH"
     if "model architecture" in text and "not supported" in text:
