@@ -1,6 +1,6 @@
 # ARC Prize 2026 — Project Status
 
-Last updated: 2026-08-24
+Last updated: 2026-08-25
 
 ## Executive state
 
@@ -10,6 +10,7 @@ Last updated: 2026-08-24
 - **Primary competition deadline:** 2026-11-02 23:59 UTC.
 - **Paper Track deadline:** 2026-11-09 23:59 UTC.
 - **Current gate:** obtain N1 hidden rerun score and one strategically useful task-level alternative/comparison, then freeze the first evidence-based M2/M3 hypothesis.
+- **Parallel prize path:** Paper Prize is now formally active and shares the same experiment/evidence stream.
 
 ## N1 — competitive Kaggle baseline
 
@@ -46,6 +47,39 @@ Experiments: `experiments/E0001_PENDING_N1_arc2_vanilla_exact.md` and `experimen
 
 BlackCat/N0 is now fallback only and should not consume a run if N1 is accepted.
 
+## Candidate-pool / selector instrumentation
+
+The public Qwen/NVARC candidate pipeline is now instrumented separately from final submission scoring.
+
+New M1 tooling measures:
+- candidate-pool oracle exact coverage;
+- public-selector pass@2;
+- oracle-to-selector gap;
+- truth-present-but-not-top2 failures;
+- correct-candidate rank distribution;
+- raw vs unique candidate counts and duplicate generation;
+- processed vs missing outputs so timeouts remain visible;
+- top-two disagreement and selector-unique rescues.
+
+The implementation reproduces the two public 2026 selectors (`score_kgmon` and `score_full_probmul_3`) only as measurement baselines. It does not introduce an original competitive selector.
+
+Docs: `docs/M1_CANDIDATE_POOL_AUDIT.md`.
+
+## N2 — controlled TRM/NVARC comparison
+
+Current public code snapshot:
+- N1 `ARC2 vanilla exact`: **31.39**;
+- `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
+- `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**.
+
+N2 is now **CONDITIONAL**, not automatic. We will not spend another competition rerun merely to collect a second ~31% leaderboard number from the same broad lineage.
+
+Preferred N2, if triggered: `ARC 2026 NVARC TRM Evidence Cost V1`.
+
+Launch only if it can answer a concrete complementarity/provenance question or expose full task/candidate artifacts. Otherwise mark the N2 evidence PARTIAL and save quota for hypothesis-testing runs.
+
+Docs: `docs/M1_N2_DECISION.md`.
+
 ## S0 — compact symbolic baseline
 
 **REJECT as standalone.**
@@ -69,11 +103,11 @@ Project measurement therefore separates:
 1. **candidate-discovery ceiling / oracle union**;
 2. **actual two-attempt selection efficiency**.
 
-Pairwise and multi-solver tooling on `main` now measures exact coverage, unique wins, oracle union, leave-one-out contribution, second-attempt rescues, duplicate attempts and optional runtime-budget portfolios.
+Pairwise and multi-solver tooling on `main` measures exact coverage, unique wins, oracle union, leave-one-out contribution, second-attempt rescues, duplicate attempts and optional runtime-budget portfolios.
 
-We will **not retrain TRM from scratch** in M1. Any N2 comparison must use a public checkpoint/notebook and answer a bounded complementarity question.
+We will **not retrain TRM from scratch** in M1. Public ARC Prize verification reports a TRM ARC-AGI-2 replication around 6.2%, but the published training recipe requires 8xH100 for roughly 20–30 hours. A checkpoint may be revisited later only as a cheap candidate source if complementarity justifies it.
 
-Docs: `docs/M1_NVARC_AUDIT.md`.
+Docs: `docs/M1_NVARC_AUDIT.md` and `docs/M1_N2_DECISION.md`.
 
 ## C0 — CompressARC strong distinct reference
 
@@ -91,6 +125,17 @@ Therefore the 400-task artifact must not be reported as a current ARC-AGI-2 scor
 
 Experiment: `experiments/E0003_20260824_compressarc_artifact_provenance.md`.
 Docs: `docs/M1_COMPRESSARC_REPRO.md`.
+
+## Paper Prize
+
+The Paper Prize is a **separate prize track** but uses the same research evidence.
+
+Foundation now in the repository:
+- competition/eligibility plan;
+- evidence-first paper outline;
+- claim-to-experiment matrix.
+
+The paper will not invent claims after the fact. Positive results, negative results, ablations, failure modes and provenance decisions are being logged during engineering so they can support theory, progress, completeness and novelty judgments later.
 
 ## Evaluation discipline
 
@@ -117,14 +162,14 @@ Before committing a genuinely original competitive mechanism, unpublished ablati
 
 ### User-side
 
-No new run or Ryzen work is required now. The only useful user-side evidence is the N1 competition result when Kaggle returns it.
+No new run or Ryzen work is required while the N1 private rerun is active. The only useful user-side evidence is the N1 competition result when Kaggle returns it.
 
 ### Research-side
 
-1. treat E0004 as smoke evidence only and do not tune to its four generated tasks;
-2. decide whether one N2 current NVARC/TRM run has enough information value to justify the quota;
-3. seek comparable task-level predictions or a bounded frozen public-evaluation run where the exact dataset version is pinned;
-4. measure overlap/oracle union rather than raw score alone;
+1. finish and test candidate-pool/selector instrumentation;
+2. continue public artifact search without spending GPU;
+3. preserve N2 as a conditional, single high-information comparison;
+4. keep Paper Prize claim/evidence structure synchronized with experiments;
 5. close M1 **PASS or PARTIAL by 2026-09-02**;
 6. freeze the first M2/M3 research hypothesis and trigger repository-visibility review before original competitive code.
 
