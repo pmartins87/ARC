@@ -6,10 +6,10 @@ This protocol is deliberately small. Its purpose is to decide whether the Lightn
 
 ## Gate A — inspect only
 
-Run `scripts/lightning_kaggle_smoke.py` in default `inspect` mode with:
+Run `notebooks/E0006_lightning_gate_a_kaggle.ipynb` with:
 - Kaggle GPU: L4 x4;
 - Internet: OFF;
-- target Lightning model attached as an input if the HF→Kaggle integration succeeds.
+- preferred checkpoint: `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4` attached as a Kaggle Model/Input.
 
 PASS requires:
 - four CUDA devices visible;
@@ -20,14 +20,23 @@ PASS requires:
 
 If `vllm` is missing or clearly older/incompatible with Lightning 3.5, do **not** attempt a blind large-model load. Prepare an attached dependency package/wheel first.
 
+## Checkpoint order
+
+1. **NVFP4 preferred.** On L4 this is expected to execute through the documented W4A16 fallback path rather than native Blackwell NVFP4 arithmetic. It gives substantially more memory headroom for the feasibility test.
+2. **BF16 fallback/reference.** Use only if the quantized checkpoint cannot be materialized or the quantized execution path is mechanically unsupported while BF16 remains plausible.
+
+Do not change checkpoint between Gate A and Gate B unless the Gate A review explicitly records the reason.
+
 ## Gate B — one model load + one short generation
 
-Run `scripts/lightning_vllm_kaggle_smoke.py` only after Gate A.
+Run `notebooks/E0006_lightning_gate_b_kaggle.ipynb` only after Gate A is reviewed and passes.
 
-First configuration:
+The standalone notebook mirrors the repository smoke harness and requires no repo clone. First configuration:
 - TP=4;
 - expert parallel ON;
-- BF16 weights;
+- same checkpoint validated by Gate A;
+- quantization auto-detected (`modelopt_fp4` for the NVFP4 checkpoint);
+- compute dtype = BF16;
 - max model length = 8192;
 - Mamba SSM cache = float16;
 - Mamba backend = flashinfer;
@@ -39,6 +48,10 @@ First configuration:
 - max completion = 64 tokens.
 
 These choices intentionally favor **load/compatibility diagnosis**, not production throughput.
+
+Expected artifacts:
+- `/kaggle/working/e0006_gate_b_smoke.json`;
+- `/kaggle/working/e0006_gate_b_vllm.log`.
 
 PASS requires all of:
 - vLLM health endpoint becomes ready;
@@ -53,7 +66,7 @@ PARTIAL:
 - the model fits only after a simple non-score-seeking compatibility change (for example disabling a parser or changing backend while preserving the same checkpoint).
 
 FAIL / REJECT DEPLOYMENT PATH:
-- BF16 cannot initialize even at reduced context because of VRAM;
+- the selected checkpoint cannot initialize even at reduced context because of VRAM;
 - L4 lacks a required kernel/backend and no safe competition-valid fallback is available;
 - startup is repeatedly unstable;
 - measured throughput makes even a minimal 240-task budget clearly infeasible.
