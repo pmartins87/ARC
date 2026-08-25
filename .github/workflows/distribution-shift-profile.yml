@@ -1,0 +1,52 @@
+name: Public Distribution Shift Profile
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/arcsolver/distribution_profile.py'
+      - 'scripts/profile_visible_distribution_shift.py'
+      - 'tests/test_distribution_profile.py'
+      - '.github/workflows/distribution-shift-profile.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/arcsolver/distribution_profile.py'
+      - 'scripts/profile_visible_distribution_shift.py'
+      - '.github/workflows/distribution-shift-profile.yml'
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Checkout ARC-AGI-2 public data
+        uses: actions/checkout@v4
+        with:
+          repository: arcprize/ARC-AGI-2
+          path: official-arc-agi-2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install -e '.[dev]'
+
+      - name: Run leakage-safe visible distribution profile
+        run: >-
+          python scripts/profile_visible_distribution_shift.py
+          official-arc-agi-2/data/training
+          official-arc-agi-2/data/evaluation
+          --json-out experiments/visible_distribution_shift.json
+
+      - name: Upload profile artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: visible-distribution-shift
+          path: experiments/visible_distribution_shift.json
