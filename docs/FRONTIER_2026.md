@@ -2,7 +2,7 @@
 
 Snapshot: 2026-08-25
 
-This document now separates **three different frontiers** that must never be conflated:
+This document separates **three different frontiers** that must never be conflated:
 
 1. **public-code Kaggle baseline frontier** — directly inspectable/copyable notebooks;
 2. **live private competition frontier** — best scores currently achieved by competing teams under the real no-internet Kaggle rerun;
@@ -12,8 +12,9 @@ That distinction materially changes our prize strategy.
 
 ## 1. Public-code Kaggle baseline frontier
 
-At the 2026-08-24/25 public Code snapshot, directly inspectable notebooks include roughly:
+The public-code snapshot moved again during 2026-08-25. Public notebook evidence now includes:
 
+- `ARC Baseline Rebuild`: **Best Score 31.81, Version 73**; its current Version 89 shows 30.14 and a 5h35m52s L4 x4 runtime;
 - `ARC2 vanilla exact`: **31.39**;
 - `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
 - `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**;
@@ -21,12 +22,17 @@ At the 2026-08-24/25 public Code snapshot, directly inspectable notebooks includ
 - `ARC-AGI-2 Public Frontier Perfpatch Evidence Lab`: **29.03**;
 - `ARC AGI2 Minimal Augmentation Specialist`: **28.89**.
 
-These are valuable because their code/resources can be inspected and reproduced. **They are not the current live competition frontier.**
+Therefore **31.81 is the strongest public-notebook score currently verified in our audit**, while 31.39 remains our first controlled reproduction anchor. The 31.81 evidence is a notebook-version-history leaderboard result, not yet our own reproduction and not evidence of task-level complementarity.
 
-N1 (`ARC2 vanilla exact`) remains useful as our first open, reproducible anchor. A gain from ~31% to 35–40% would still be meaningful engineering/scientific progress relative to that open anchor, but it is no longer reasonable to describe 35–40% as a likely prize-contending target given the live leaderboard below.
+These public notebooks are useful because their code/resources can be inspected. **They are not the live competition frontier.** A gain from our N1 anchor to 35–40% would still be meaningful engineering/scientific progress, but it is not reasonable to treat 35–40% as a likely prize-contending target given the live leaderboard below.
 
-Source:
+Sources captured 2026-08-25:
 - https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-2/code
+- https://www.kaggle.com/code/yusuketogashi/arc-baseline-rebuild/output
+
+### N2 consequence
+
+The 31.81 public best does **not** trigger an automatic reproduction. It is only +0.42 percentage points over N1's public 31.39 and is still about forty points below the live leaders. A new public baseline consumes Kaggle quota only if its artifacts/method provide high-information complementarity, candidate-pool, runtime or provenance evidence.
 
 ## 2. Live competition frontier — major strategy reset
 
@@ -50,7 +56,7 @@ Our earlier mental model that the competition frontier was around 31% was too op
 
 Correct interpretation:
 
-> **31.39% is the open/public-code baseline frontier we can reproduce, while ~72% is the current live competition frontier.**
+> **~31.8% is the current public-notebook frontier we can inspect, while ~72% is the current live competition frontier.**
 
 That gap is enormous and means incremental notebook tuning alone is unlikely to be enough for a Progress Prize unless the live field changes unexpectedly.
 
@@ -98,9 +104,9 @@ Source:
 
 ## 6. Open-weight / hardware reality
 
-Large open-weight ARC-capable models can exceed our public-code anchor but may not fit 4xL4 directly. Earlier audits already showed examples whose official checkpoints need substantially more aggregate VRAM than Kaggle supplies.
+Large open-weight ARC-capable models can exceed our public-code anchor but may not fit 4xL4 directly. The current preferred feasibility probe, Nemotron 3.5 Lightning BF16 TP4, now has a vendor-published NIM profile floor of 20 GB/GPU on four Ampere-or-newer GPUs; the target L4 x4 satisfies that floor on nominal memory, count and architecture. Bare-vLLM Kaggle compatibility and throughput still require measurement.
 
-The live 70%+ competition scores prove, however, that **a competition-fit route exists**. We should therefore focus less on asking whether 4xL4 is enough in principle and more on discovering what efficient representation/search/adaptation/selection stack makes such performance possible.
+The live 70%+ competition scores prove that **a competition-fit route exists**. We should therefore focus less on asking whether 4xL4 is enough in principle and more on discovering what efficient representation/search/adaptation/selection stack makes such performance possible.
 
 Public details of the current leaders' complete methods are not yet available here. Community speculation about particular NVIDIA/Nemotron resources or harnesses is **not treated as evidence** until sourced from the teams or reproducible artifacts.
 
@@ -108,6 +114,7 @@ Public details of the current leaders' complete methods are not yet available he
 
 Low-value direction:
 - optimize toward 35–40% and mistake that for a prize target;
+- spend runs reproducing every +0.x public notebook update;
 - stack correlated public notebooks without unique exact coverage;
 - blindly imitate hosted API systems that cannot fit the competition;
 - assume more refinement iterations necessarily improve reasoning;
@@ -119,6 +126,7 @@ High-value direction:
 - identify which failure class creates the largest exact-score loss;
 - preserve genuinely diverse hypotheses under the two-attempt budget;
 - investigate efficient competition-fit mechanisms that can produce **large**, not incremental, generalization gains;
+- test high-information public routes such as the ARC-post-trained Lightning/NVARC path under bounded compute;
 - keep Paper Prize evidence rigorous even if leaderboard competitiveness remains distant.
 
 ## 8. M1 consequence
@@ -127,9 +135,10 @@ M1 should still finish rather than panic and restart:
 
 1. N1 hidden rerun remains necessary as our reproducible open anchor;
 2. candidate-pool / selector / runtime / provenance instrumentation remains useful;
-3. N2 stays conditional because another ~31% public notebook does not close a ~40-point live-frontier gap;
-4. before M2, hypotheses must be ranked by **potential step-change leverage**, not just likelihood of +1–2 points;
-5. we must search for public evidence from current 70%+ teams as it appears;
-6. exact current top-8 threshold remains an open fact to retrieve, not something to estimate casually.
+3. N2 stays conditional because another ~31–32% public notebook does not close a ~40-point live-frontier gap;
+4. the Lightning/NVARC L4 feasibility smoke is higher information value than a leaderboard-only 31.81 reproduction;
+5. before M2, hypotheses must be ranked by **potential step-change leverage**, not just likelihood of +1–2 points;
+6. we must search for public evidence from current 70%+ teams as it appears;
+7. exact current top-8 threshold remains an open fact to retrieve, not something to estimate casually.
 
 The scientific/Paper Prize path remains valuable even if current Progress Prize odds are low. A strong, reproducible mechanism can still be important even before it reaches the 70% live frontier.
