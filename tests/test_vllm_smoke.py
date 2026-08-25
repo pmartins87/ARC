@@ -39,6 +39,33 @@ def test_build_vllm_serve_command_matches_lightning_shape() -> None:
     assert "--speculative-config" not in cmd
 
 
+def test_modelopt_w4a16_flags_are_explicit_and_backend_overrides_optional() -> None:
+    config = VLLMSmokeConfig(
+        model_path="/kaggle/input/lightning-nvfp4/model",
+        quantization="modelopt_fp4",
+        linear_backend="marlin",
+        moe_backend="marlin",
+        mamba_cache_mode="align",
+        mamba_ssu_algorithm="simple",
+    )
+    cmd = build_vllm_serve_command(config)
+    assert ["--quantization", "modelopt_fp4"] == cmd[
+        cmd.index("--quantization") : cmd.index("--quantization") + 2
+    ]
+    assert ["--linear-backend", "marlin"] == cmd[
+        cmd.index("--linear-backend") : cmd.index("--linear-backend") + 2
+    ]
+    assert ["--moe-backend", "marlin"] == cmd[
+        cmd.index("--moe-backend") : cmd.index("--moe-backend") + 2
+    ]
+    assert ["--mamba-cache-mode", "align"] == cmd[
+        cmd.index("--mamba-cache-mode") : cmd.index("--mamba-cache-mode") + 2
+    ]
+    assert ["--mamba-ssu-algorithm", "simple"] == cmd[
+        cmd.index("--mamba-ssu-algorithm") : cmd.index("--mamba-ssu-algorithm") + 2
+    ]
+
+
 def test_optional_flags_can_be_disabled() -> None:
     config = VLLMSmokeConfig(
         model_path="/m",
@@ -62,6 +89,9 @@ def test_optional_flags_can_be_disabled() -> None:
     assert "--enable-auto-tool-choice" not in cmd
     assert "--max-model-len" not in cmd
     assert "--enforce-eager" not in cmd
+    assert "--quantization" not in cmd
+    assert "--linear-backend" not in cmd
+    assert "--moe-backend" not in cmd
 
 
 @pytest.mark.parametrize(
@@ -84,6 +114,7 @@ def test_failure_classification() -> None:
     assert classify_server_failure("CUDA out of memory", 1) == "OOM_LOAD_OR_INIT"
     assert classify_server_failure("No module named vllm", 1) == "DEPENDENCY_MISSING"
     assert classify_server_failure("unrecognized arguments: --mamba-backend", 2) == "VLLM_VERSION_OR_FLAG_MISMATCH"
+    assert classify_server_failure("quantization modelopt_fp4 is not supported", 1) == "UNSUPPORTED_QUANTIZATION_PATH"
     assert classify_server_failure("invalid device function", 1) == "UNSUPPORTED_KERNEL_OR_ARCH"
     assert classify_server_failure("address already in use", 1) == "PORT_IN_USE"
     assert classify_server_failure("still waiting", None) == "STARTUP_TIMEOUT"
