@@ -5,18 +5,23 @@ on:
   pull_request:
     paths:
       - 'src/arcsolver/distribution_profile.py'
+      - 'src/arcsolver/gate_split.py'
       - 'scripts/profile_visible_distribution_shift.py'
       - 'scripts/profile_eval_split_balance.py'
       - 'scripts/make_split.py'
+      - 'scripts/make_gate_split_v2.py'
       - 'tests/test_distribution_profile.py'
+      - 'tests/test_gate_split.py'
       - '.github/workflows/distribution-shift-profile.yml'
   push:
     branches: [main]
     paths:
       - 'src/arcsolver/distribution_profile.py'
+      - 'src/arcsolver/gate_split.py'
       - 'scripts/profile_visible_distribution_shift.py'
       - 'scripts/profile_eval_split_balance.py'
       - 'scripts/make_split.py'
+      - 'scripts/make_gate_split_v2.py'
       - '.github/workflows/distribution-shift-profile.yml'
 
 jobs:
@@ -49,7 +54,7 @@ jobs:
           official-arc-agi-2/data/evaluation
           --json-out experiments/visible_distribution_shift.json
 
-      - name: Recreate frozen public-evaluation split
+      - name: Recreate frozen public-evaluation split v1
         run: >-
           python scripts/make_split.py
           official-arc-agi-2/data/evaluation
@@ -57,12 +62,27 @@ jobs:
           --profile evaluation
           --seed arc-2026-v1
 
-      - name: Audit frozen 60/30/30 split balance
+      - name: Audit frozen split v1 balance
         run: >-
           python scripts/profile_eval_split_balance.py
           official-arc-agi-2/data/evaluation
           experiments/evaluation_split_v1.json
           --json-out experiments/evaluation_split_balance_v1.json
+
+      - name: Build leakage-safe gate split v2
+        run: >-
+          python scripts/make_gate_split_v2.py
+          official-arc-agi-2/data/evaluation
+          experiments/evaluation_split_v1.json
+          experiments/evaluation_split_v2.json
+          --seed arc-2026-gates-v2
+
+      - name: Audit gate split v2 balance
+        run: >-
+          python scripts/profile_eval_split_balance.py
+          official-arc-agi-2/data/evaluation
+          experiments/evaluation_split_v2.json
+          --json-out experiments/evaluation_split_balance_v2.json
 
       - name: Upload profile artifacts
         uses: actions/upload-artifact@v4
@@ -72,3 +92,5 @@ jobs:
             experiments/visible_distribution_shift.json
             experiments/evaluation_split_v1.json
             experiments/evaluation_split_balance_v1.json
+            experiments/evaluation_split_v2.json
+            experiments/evaluation_split_balance_v2.json

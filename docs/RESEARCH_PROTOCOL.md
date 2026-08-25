@@ -30,13 +30,26 @@ A fixed 30-task sealed subset opened only at milestone gates. Repeated tuning ag
 ### Level E — Kaggle hidden evaluation
 This is the competition target. Kaggle replaces the placeholder test challenges during rerun with unseen tasks. Leaderboard gains are evidence, not proof of generality; avoid repeated leaderboard probing as a substitute for internal validation.
 
-## Split construction
+## Split construction and versioning
 
-Use `scripts/make_split.py` with the `evaluation` profile to produce exact 60/30/30 counts from the 120 public evaluation task IDs. Ordering is deterministic from a cryptographic hash of `(seed, task_id)` so the manifest can be regenerated exactly.
+The original operational manifest (`arc-2026-v1`) used `scripts/make_split.py` to produce exact 60/30/30 counts from the 120 public evaluation task IDs. Ordering was deterministic from a cryptographic hash of `(seed, task_id)`.
 
-Before strong scientific claims, inspect the corpus for structural/near-duplicate families and, if necessary, introduce a **grouped** split that keeps close variants together. The first hash split is a reproducible operational benchmark, not a guarantee of family independence.
+E0007/E0008 then performed a **label-free structural audit before any Level C/D score was used**. It found that the untouched v1 validation and heldout gates were strongly skewed in visible difficulty proxies: median test-input area was 642.5 for validation versus 285 for heldout.
 
-Once a milestone begins, its split manifest and seed are immutable and their SHA must be logged.
+Because development had already been used, its 60 task IDs are preserved exactly. Only the still-unopened 60-task validation+heldout pool was rebalanced using training examples and test inputs only. `scripts/make_gate_split_v2.py` pairs structurally nearest tasks in rank-normalized visible-feature space and sends one member of each pair to validation and one to heldout. Test outputs are never read.
+
+The adopted gate manifest is:
+
+- `experiments/evaluation_split_v2.json`
+- profile: `evaluation-gates-v2`
+- seed: `arc-2026-gates-v2`
+- SHA-256: `0a03d5aba5670b779522b6f2bde55f165ba87c2f2a0f123dd0b969e9acbd2bc3`
+
+Measured visible balance improved materially: validation/heldout median test-input area is 473.5/484 and multi-test-task fraction is 36.7%/40.0%. Development remains unchanged.
+
+This is a one-time **pre-gate protocol correction**, not a result-driven resplit. From adoption onward, v2 is immutable. Any future change requires an explicit new protocol version and invalidates confirmatory claims that depended on an older gate definition.
+
+Before strong scientific claims, continue to inspect the corpus for structural/near-duplicate families. If a grouped-family split is ever needed, it must be defined before using the affected gate scores and cannot retroactively rescue a failed result.
 
 ## Metrics
 
@@ -116,7 +129,7 @@ Core scoring and schema code should remain dependency-light. Competition noteboo
 - Never create a rule whose only justification is one validation/evaluation/test task.
 - Log manual inspection of eval-validation/eval-heldout failures.
 - Deduplicate synthetic data against public evaluation/test material where possible.
-- Keep split manifests immutable once a milestone begins.
+- Keep v2 gate manifest immutable after adoption.
 - Treat Kaggle leaderboard probing as a scarce diagnostic, not an optimization loop.
 
 ## Public/private repository policy
