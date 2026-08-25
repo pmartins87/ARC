@@ -1,0 +1,30 @@
+{
+  "profile": "e0006-dev-pilot-v1",
+  "date": "2026-08-25",
+  "parent_split_manifest": "experiments/evaluation_split_v2.json",
+  "selection_basis": "12 unique development tasks nearest to evenly spaced quantiles of task-level maximum transductive prompt-token count from E0009; no test output or task score used",
+  "tokenizer_model_revision": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16@a9904d24bcc1d289a1950fa9d2b978c47cf903b9",
+  "task_count": 12,
+  "tasks": [
+    {"task_id": "20270e3b", "max_transductive_prompt_tokens": 744, "visible_test_slots": 2},
+    {"task_id": "7b5033c1", "max_transductive_prompt_tokens": 1010, "visible_test_slots": 1},
+    {"task_id": "446ef5d2", "max_transductive_prompt_tokens": 1528, "visible_test_slots": 2},
+    {"task_id": "9385bd28", "max_transductive_prompt_tokens": 1828, "visible_test_slots": 2},
+    {"task_id": "4e34c42c", "max_transductive_prompt_tokens": 2056, "visible_test_slots": 2},
+    {"task_id": "3a25b0d8", "max_transductive_prompt_tokens": 2280, "visible_test_slots": 2},
+    {"task_id": "4a21e3da", "max_transductive_prompt_tokens": 2583, "visible_test_slots": 1},
+    {"task_id": "89565ca0", "max_transductive_prompt_tokens": 2808, "visible_test_slots": 1},
+    {"task_id": "2ba387bc", "max_transductive_prompt_tokens": 3033, "visible_test_slots": 1},
+    {"task_id": "4c416de3", "max_transductive_prompt_tokens": 3500, "visible_test_slots": 1},
+    {"task_id": "b10624e5", "max_transductive_prompt_tokens": 3882, "visible_test_slots": 1},
+    {"task_id": "9aaea919", "max_transductive_prompt_tokens": 6621, "visible_test_slots": 1}
+  ],
+  "total_visible_test_slots": 17,
+  "gate_policy": {
+    "first_use": "after E0006 Gate B PASS",
+    "compare_modes": ["transductive", "inductive"],
+    "equal_budget_required": true,
+    "leaderboard_submission": false,
+    "validation_and_heldout_remain_sealed": true
+  }
+}
