@@ -4,261 +4,170 @@ Last updated: 2026-08-25
 
 ## Executive state
 
-- **Current milestone:** M1 — Reproduce competitive baselines — **ACTIVE**.
+- **Current milestone:** M1 — Reproduce competitive baselines / feasibility — **ACTIVE**.
 - **Completed:** M0 — Foundation and rules freeze — **PASS**.
 - **M1 timebox end:** 2026-09-02.
 - **Primary competition deadline:** 2026-11-02 23:59 UTC.
-- **Paper Track deadline:** 2026-11-09 23:59 UTC in the current Kaggle UI/project record; re-verify before final paper scheduling because the ARC Prize overview page has shown a different calendar rendering.
-- **Current gate:** obtain N1 hidden rerun score and enough task/candidate/runtime evidence to freeze the first evidence-based M2/M3 hypothesis.
-- **Parallel prize path:** Paper Prize is formally active and shares the same experiment/evidence stream.
+- **Paper Track:** active in parallel from the same evidence stream; internal safety deadline 2026-11-08 pending final re-verification of organizer date discrepancy.
+- **N1 gate:** **PASS / COMPLETE**.
+- **Current external gate:** E0006 Lightning + NVIDIA NVARC **L4 x4 compatibility/throughput smoke**.
 
-## Strategic frontier reset — 2026-08-25
+## N1 — first end-to-end Kaggle neural baseline
 
-A material correction is now frozen:
+`ARC2 vanilla exact`, unchanged public reproduction.
 
-- **31.39%** (`ARC2 vanilla exact`) is the strongest directly inspectable/copyable **public-code baseline** in our current snapshot;
-- it is **not** the live competition frontier;
-- fresh ARC Prize public updates report **nvbanana at 72.08%** and **rabbithole at 70.42%** in the live ARC-AGI-2 competition.
+Evidence:
+- copied notebook Version 1;
+- `Save & Run All` runtime **25m29s**;
+- accelerator **GPU L4 x4**;
+- notebook Internet OFF;
+- valid `submission.json`;
+- competition rerun status **Succeeded**;
+- Kaggle **Public Score 29.72**;
+- frozen source snapshot reference **31.39**;
+- reproduction delta **-1.67 percentage points**.
 
-The exact current 8th-place score is not verified here and must not be guessed.
+Interpretation:
+- N1 is a successful operational reproduction and our first Kaggle-valid neural anchor;
+- 29.72 is the Public Score from the competition rerun, **not** the final private score used at competition close;
+- the 1.67pp source gap is preserved as provenance evidence rather than chased with repeated leaderboard reruns;
+- correlated ~30–32% public notebooks are now low information value unless they expose a concrete complementarity or provenance question.
 
-Consequences:
-- N1 remains necessary as our reproducible open anchor;
-- 35–40% would be a meaningful improvement over public code but **not a credible prize target by itself** given the current live leaders;
-- M2 hypotheses must be judged partly by potential **step-change leverage**, not only easy +1–2pp improvements;
-- another correlated ~31% public notebook has low information value unless it yields task/candidate evidence;
-- the Paper Prize remains strategically important because rigorous conceptual progress can matter even without matching the live leaderboard immediately.
+Experiment: `experiments/E0001_20260825_n1_arc2_vanilla_exact.md`.
 
-Docs: `docs/FRONTIER_2026.md` and `docs/STATE_OF_THE_ART.md`.
+### Local N1 smoke-output audit
 
-## N1 — competitive Kaggle baseline
-
-`ARC2 vanilla exact`
-
-Our clean copy:
-- Version 1 completed successfully;
-- runtime: **25m29s**;
-- accelerator: **GPU L4 x4**;
-- valid `submission.json` generated;
-- Kaggle competition submission was accepted for the private rerun;
-- hidden competition rerun score: **PENDING / IN PROGRESS**.
-
-Reference public notebook score at the 2026-08-24 snapshot: **31.39%**. This is third-party public-code evidence until our rerun result arrives.
-
-### Local smoke-output audit
-
-The local/non-rerun `submission.json` is now audited and is **not a full 120-task performance artifact**:
+The local non-rerun output was intentionally only a smoke artifact:
 - 120 task IDs / 172 output slots;
-- **167/172** slots are `[[0]]` placeholders in both attempts;
-- only **5 output slots across 4 tasks** contain generated candidates.
+- **167/172** slots placeholders `[[0]]`;
+- only 5 generated outputs across 4 tasks;
+- those generated outputs scored 3/5 pass@1 and 4/5 pass@2 against matching current official outputs;
+- one exact rescue came only from attempt 2 (`36a08778[1]`).
 
-On those five generated outputs, against matching current official task outputs:
-- pass@1: **3/5 = 60%**;
-- pass@2: **4/5 = 80%**;
-- one exact solve comes exclusively from attempt 2 (`36a08778[1]`);
-- generated-attempt duplicate rate: **0/5**.
+A dataset-version mismatch also exists between the local Kaggle submission schema (172 slots) and the current official GitHub evaluation directory (167 slots). E0005 fingerprints this explicitly; cross-version auditing must pin provenance.
 
-A pinned public Qwen/NVARC-lineage source audit explains the four-task smoke path: its non-rerun queue explicitly keeps exactly `0934a4d8`, `36a08778`, `981571dc`, and `aa4ec2a5`, while competition rerun mode loads the hidden test challenges and removes that four-task filter. Those are exactly the four generated task IDs in our local artifact. This is strong lineage evidence, not a byte-identity claim about N1.
+## Competitive frontier
 
-Therefore the 25m29s local save and the multi-hour competition rerun are intentionally different workloads.
+Keep three regimes separate:
 
-A provenance mismatch was also discovered: the current official GitHub evaluation set has different test-pair counts from the Kaggle submission schema for five task IDs (`4a21e3da`, `abc82100`, `faa9f03d`, `b6f77b65`, `f560132c`). E0005 freezes exact dataset/submission fingerprints; future full audits must pin the exact Kaggle dataset version rather than silently substitute the current GitHub directory.
+1. **our controlled N1 anchor:** 29.72;
+2. **public-code notebooks:** strongest currently verified in our audit ~31.81 (`ARC Baseline Rebuild`, best Version 73);
+3. **live prize frontier:** organizer-reported leaders ~70%+.
 
-Experiments: `experiments/E0001_PENDING_N1_arc2_vanilla_exact.md`, `experiments/E0004_20260824_n1_local_smoke_audit.md`, `experiments/E0005_20260825_dataset_schema_fingerprint.md`.
+Therefore M2 must seek **step-change leverage**, not routine +0.x leaderboard tuning. The exact current 8th-place score remains unverified and must not be guessed.
 
-BlackCat/N0 is fallback only and should not consume a run if N1 is accepted.
+## Evaluation protocol
 
-## Candidate-pool / selector instrumentation
+Public ARC-AGI-2 structure:
+- 1,000 training tasks: development/training/synthetic material;
+- 120 public evaluation tasks: primary public proxy for hidden generalization.
 
-The public Qwen/NVARC candidate pipeline is instrumented separately from final submission scoring.
+E0007 measured a material visible train→evaluation shift without reading test outputs:
+- median test-input area **144 → 484** (3.36x);
+- median demo-input area **100 → 299**;
+- median test-input colors **4 → 6**;
+- multi-test-task fraction **6.9% → 37.5%**.
 
-M1 tooling measures:
-- candidate-pool oracle exact coverage;
-- public-selector pass@2;
-- oracle-to-selector gap;
-- truth-present-but-not-top2 failures;
-- correct-candidate rank distribution;
-- raw vs unique candidate counts and duplicate generation;
-- processed vs missing outputs so timeouts remain visible;
-- top-two disagreement and selector-unique rescues.
+The original deterministic 60/30/30 evaluation split was then audited before any validation/heldout score was used. E0008 found validation/heldout structurally skewed: median test-input area **642.5 vs 285**. We therefore preserved the 60-task development set exactly and rebalanced only the still-unopened 60-task gate pool using visible features (training demonstrations + test inputs only).
 
-The implementation reproduces the two public 2026 selectors (`score_kgmon` and `score_full_probmul_3`) only as measurement baselines. It does not introduce an original competitive selector.
+Immutable gate manifest: `experiments/evaluation_split_v2.json`.
 
-Docs: `docs/M1_CANDIDATE_POOL_AUDIT.md` and `docs/M1_DIAGNOSTIC_DUMP_PLAN.md`.
+New validation/heldout medians:
+- test-input area **473.5 / 484**;
+- multi-test-task fraction **36.7% / 40.0%**;
+- output-slot counts **42 / 43**.
 
-## 2026 diversity/selection prior-art update
+No validation/heldout output or score was read during this rebalance.
 
-Johan Land's 2026 paper `Modality-Driven Search with Holistic Trace Judging for ARC-AGI-2` adds a material caution to the 2025 “refinement loop” thesis:
+## Instrumentation ready
 
-- independent candidate generation across text/image/code can preserve minority hypotheses;
-- a holistic judge can outperform simple majority selection in the reported hosted setting;
-- the paper reports **prescriptive templates and iterative refinement reducing hypothesis diversity and degrading performance**.
+On `main` we now have dependency-light tooling for:
+- exact pass@1/pass@2 scoring;
+- symbolic lower-bound evaluation;
+- candidate-pool oracle vs selector gap;
+- second-attempt rescues and duplicate attempts;
+- candidate diversity and near-duplicate diagnostics;
+- pairwise/multi-solver complementarity;
+- runtime/task coverage under deadline;
+- dataset/submission provenance fingerprints;
+- visible distribution profiling and gate-balance audit;
+- local NVIDIA NVARC-compatible transductive and inductive verification.
 
-This does not prove refinement is generally bad. It means our M2/M3 work must measure **diversity collapse versus useful refinement** rather than assume more iterations are better.
+The project explicitly separates:
+1. candidate discovery;
+2. final two-attempt selection;
+3. runtime/coverage;
+4. hypothesis diversity/collapse;
+5. provenance/version drift.
 
-The published method uses frontier APIs and much greater cost, so it is not a direct Kaggle recipe. Its broad mechanisms are now prior art and cannot later be claimed as our novelty.
+## S0 — shallow symbolic baseline
 
-Docs: `docs/STATE_OF_THE_ART.md`; dedicated diversity audit pending/active in M1.
+**REJECT standalone.**
 
-## Runtime / coverage instrumentation
+Frozen development result:
+- 60 tasks / 82 outputs;
+- pass@1 **0.0%**;
+- pass@2 **0.0%**;
+- runtime ~14.78 s GitHub Actions CPU.
 
-Runtime is measured as a separate competition mechanism rather than being conflated with reasoning quality.
+Retain only as lower-bound/regression instrumentation.
 
-The pinned public Qwen lineage uses:
-- a nominal **11h50m** work budget inside the 12h Kaggle ceiling;
-- **4 GPU workers** sharing a task queue;
-- puzzle-specific adaptation plus candidate decoding/rescoring per task;
-- global cutoff behavior that can leave tasks partial or never started.
+## N2 / N0 / C0 decisions
 
-Tooling models:
-- tasks completed before deadline;
-- tasks started but incomplete;
-- tasks never started;
-- worker utilization;
-- aggregate capacity lower bound;
-- FIFO/load-imbalance penalty;
-- uniform speedup required to complete a fixed observed queue;
-- pure coverage ceiling on exact score.
+- **N2 TRM/NVARC ~31.11:** conditional only; skip for score alone.
+- **N0 BlackCat:** retired fallback now that N1 validated the pipeline.
+- **C0 CompressARC:** retain as conceptually distinct MDL/test-time-learning reference, but no routine Kaggle run in M1 because historical artifact provenance does not align with the current 2026 evaluation set.
 
-This lets later experiments distinguish a true reasoning/candidate-quality improvement from a score gain caused only by reaching more tasks.
+## E0006 — current high-information gate
 
-Docs: `docs/M1_RUNTIME_COVERAGE_AUDIT.md`.
+Preferred feasibility probe: **Nemotron 3.5 Lightning + NVIDIA NeMo Gym NVARC**.
 
-## Provenance fingerprinting
+Public evidence already established:
+- NVIDIA publishes a NVARC environment with **transductive direct-grid** and **inductive executable `transform()`** modes;
+- exact binary verification exists for both modes, with the inductive program executed in a restricted subprocess sandbox;
+- public configs expose matched train/validation paths for both modes;
+- Lightning has public vLLM / TP4 deployment guidance;
+- NVIDIA's NIM support matrix reports a BF16 TP4 floor of **20 GB/GPU, minimum 4 GPUs**; Kaggle L4 x4 provides 24 GB/GPU, so the published memory floor is not an immediate blocker.
 
-Evaluation integrity now includes machine-readable fingerprints for:
-- task IDs;
-- per-task test-output counts;
-- total output slots;
-- canonical challenge content;
-- submission schema.
+Prepared on `main`:
+- inspect-only Kaggle smoke;
+- bounded TP4 vLLM load + one short generation smoke;
+- structured OOM/kernel/version failure capture;
+- startup/token/memory instrumentation;
+- local source-faithful direct-grid parser;
+- local source-faithful inductive code extraction/execution verifier;
+- guarded development-split probe path.
 
-E0005 reproduces the current mismatch exactly: same 120 task IDs, but current official GitHub evaluation has **167** output slots while the N1 local submission schema has **172**.
+E0006 status: **PENDING_L4_SMOKE**.
 
-Docs: `docs/M1_PROVENANCE_FINGERPRINT.md`.
+Stop rule:
+- one compatibility round;
+- at most one bounded mechanical fix round;
+- if viable, one frozen-development transductive-vs-inductive ablation;
+- then KEEP / REJECT / INCONCLUSIVE.
 
-## N2 — controlled TRM/NVARC comparison
-
-Current public-code snapshot:
-- N1 `ARC2 vanilla exact`: **31.39**;
-- `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
-- `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**.
-
-N2 is **CONDITIONAL**, not automatic. The live competition reset makes a second ~31% leaderboard-only result even less informative.
-
-Preferred N2, if triggered: `ARC 2026 NVARC TRM Evidence Cost V1`.
-
-Launch only if it can answer a concrete complementarity/provenance question or expose full task/candidate artifacts. Otherwise mark N2 evidence PARTIAL and save quota for hypothesis-testing runs.
-
-Docs: `docs/M1_N2_DECISION.md`.
-
-## S0 — compact symbolic baseline
-
-**REJECT as standalone.**
-
-Frozen 60-task evaluation-development result:
-- 82 test outputs;
-- pass@1: **0.0%**;
-- pass@2: **0.0%**;
-- exact fitted hypotheses: **0**;
-- runtime: **14.78 s** on GitHub Actions CPU.
-
-S0 remains only as a lower-bound/regression instrument. M1 will not grow a shallow DSL blindly.
-
-Experiment: `experiments/E0002_20260824_s0_symbolic_dev.md`.
-
-## NVARC / portfolio audit
-
-The NVARC 2025 audit established a critical rule: standalone solver accuracy is insufficient. A component can generate unique correct candidates and still add zero final score if overlap is high or the final two-attempt selector drops those candidates.
-
-Project measurement separates:
-1. **candidate-discovery ceiling / oracle union**;
-2. **actual two-attempt selection efficiency**;
-3. **runtime/task coverage under the global deadline**;
-4. **hypothesis diversity versus collapse** where candidate artifacts support measurement.
-
-Pairwise and multi-solver tooling measures exact coverage, unique wins, oracle union, leave-one-out contribution, second-attempt rescues, duplicate attempts and optional runtime-budget portfolios.
-
-We will **not retrain TRM from scratch** in M1. A checkpoint may be revisited later only as a cheap candidate source if complementarity justifies it.
-
-Docs: `docs/M1_NVARC_AUDIT.md` and `docs/M1_N2_DECISION.md`.
-
-## C0 — CompressARC strong distinct reference
-
-Methodological status: **RETAIN**.
-Current task-level baseline status: **PARTIAL**.
-
-A zero-GPU shortcut attempted to recover exact coverage from the authors' published `predictions_evaluation.npz`. A strict provenance audit rejected it:
-- current official ARC-AGI-2 public evaluation: **120 tasks**;
-- published CompressARC artifact source: **400 tasks**;
-- current official tasks present in source: **6**;
-- current official tasks missing: **114**.
-
-Therefore the 400-task artifact must not be reported as a current ARC-AGI-2 score. We will not spend a user Kaggle run merely to reproduce the historical low-single-digit CompressARC result unless later evidence gives a concrete complementarity reason.
-
-Experiment: `experiments/E0003_20260824_compressarc_artifact_provenance.md`.
-Docs: `docs/M1_COMPRESSARC_REPRO.md`.
-
-## Paper Prize / novelty discipline
-
-The Paper Prize is a **separate prize track** but uses the same research evidence.
-
-Foundation includes:
-- competition/eligibility plan;
-- evidence-first paper outline;
-- claim-to-experiment matrix;
-- prior-art/novelty boundary map;
-- M2/M3 pre-registration and two-round stop rule;
-- finite M1 exit/hypothesis-selection rubric.
-
-Broad categories such as TTT, synthetic curricula, recursive refinement, MDL, evolutionary program refinement, multi-view ensembles, candidate rescoring/top-two selection, neuro-symbolic object reasoning, visual/spatial priors, and now broad **modality-driven candidate diversity / holistic trace judging** are public prior art and cannot be treated as novelty by themselves.
-
-Positive results, negative results, ablations, failure modes and provenance decisions are logged during engineering so they can support theory, progress, completeness and novelty judgments later.
-
-Docs: `docs/M1_NOVELTY_BOUNDARIES.md`, `docs/M2_EXPERIMENT_CONTRACT.md`, `docs/M1_EXIT_GATE.md`, `paper/EVIDENCE_MATRIX.md`.
-
-## Evaluation discipline
-
-- 1,000 public training tasks: training/development material.
-- 120 public evaluation tasks: principal public proxy for hidden ARC-AGI-2 generalization.
-- frozen operational split: **60 development / 30 validation / 30 heldout** using seed `arc-2026-v1`.
-- continuous tuning is allowed only on the 60 development tasks.
+This smoke is **not a competition submission** and should not consume leaderboard quota.
 
 ## Compute policy
 
-- **GitHub Actions:** deterministic tests, scoring, profiling and public-source audits.
-- **Kaggle L4 x4:** neural baselines and all final competition-valid heavy runs.
-- **Ryzen 9:** **NOT NEEDED now**. Activate only when a measured CPU-parallel workload has a plausible prize payoff.
+- **GitHub Actions:** deterministic tests/profiling/public-source audits.
+- **Kaggle L4 x4:** heavy neural feasibility and competition-valid runs.
+- **Ryzen 9:** **not needed now**; activate only for a measured CPU-parallel workload with plausible prize payoff.
 
-No additional user Kaggle run should be launched while N1 private rerun is active.
+## Paper Prize / novelty discipline
 
-## Repository visibility
+The Paper Prize is a separate prize path sharing this experiment stream. Positive results, negative results, ablations, provenance decisions and failure modes are recorded during engineering.
 
-Keep `pmartins87/ARC` **PUBLIC through M1 measurement/audit work**.
+Broad ingredients already treated as prior art include TTT, synthetic curricula, recursive refinement, MDL/test-time learning, program synthesis, multi-view candidate diversity, holistic judging, candidate rescoring and neuro-symbolic object reasoning. Novelty requires a specific mechanism plus causal evidence.
 
-Before committing a genuinely original competitive mechanism, unpublished ablation advantage or material new score improvement, stop and state:
+Before any genuinely original competitive mechanism or unpublished material score gain is committed publicly:
 
 > **Visibility Gate atingido: não devemos publicar o próximo commit.**
 
-Default action then is private development until the required open-source/writeup window, with full provenance preserved.
+Default then becomes private development until required open-source/writeup release.
 
-## Immediate gates
+## Immediate next action
 
-### User-side
+Move from aggregate-baseline reproduction to **E0006 compatibility/throughput evidence**. Do not spend another ARC leaderboard submission merely to reproduce a nearby public score.
 
-No new run or Ryzen work is required while the N1 private rerun is active. The only useful user-side evidence is the N1 competition result when Kaggle returns it.
-
-### Research-side
-
-1. keep tracking credible public evidence from live 70%+ teams without treating speculation as fact;
-2. finish diversity/selection prior-art audit;
-3. preserve N2 as a conditional, single high-information comparison;
-4. use candidate/runtime/provenance instrumentation to classify M2 bottlenecks;
-5. keep Paper Prize claim/evidence structure synchronized;
-6. close M1 **PASS or PARTIAL by 2026-09-02**;
-7. score M2 hypotheses for step-change leverage, attribution, Kaggle fit, information/run and Paper value;
-8. trigger repository-visibility review before original competitive code.
-
-## Finite-project rule
-
-A missed milestone gate becomes `PARTIAL`; the best working artifact carries forward and the project advances. No phase can consume the whole schedule. No new architecture enters after the M6 freeze on 2026-10-23. ARC-AGI-2 R&D stops at the final code deadline; Paper Track work stops at its deadline; M9 is administration/outcome recording only.
+M1 still closes PASS or PARTIAL by 2026-09-02; a missed sub-gate cannot extend the milestone indefinitely.
