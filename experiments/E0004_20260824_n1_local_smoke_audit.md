@@ -25,6 +25,24 @@ The saved `submission.json` has:
 
 Therefore this file is a **smoke/non-rerun artifact**, not a full 120-task evaluation of the N1 method. It must not be interpreted as a ~2–3% baseline or used to estimate the hidden competition score.
 
+## Why only those four tasks were generated
+
+A later source audit found a highly specific explanation in the pinned public 2026 Qwen/NVARC-lineage mirror:
+
+`MA-Zbida/arc2026-kaggle@4a3d6f33816807eacb7ea49846fadbca042abd69`
+
+Its notebook contains an explicit non-rerun guard:
+
+- when `rerun_mode` is false, the work queue keeps only `0934a4d8`, `36a08778`, `981571dc`, and `aa4ec2a5`;
+- when `rerun_mode` is true, it loads the competition `arc-agi_test_challenges.json` and does **not** apply that four-task filter;
+- the notebook writes all decoded candidates under `/kaggle/inference_outputs`, then builds `submission.json` from whatever was processed.
+
+Those are **exactly the same four task IDs** that contain generated candidates in our N1 local artifact. This is strong lineage evidence that the 25m29s local save is deliberately a four-task smoke path, while the Kaggle competition rerun activates the long full hidden path.
+
+Caveat: the pinned mirror is not claimed to be byte-identical to Søren Ravn Andersen's N1 source. The exact task-ID match plus the matching Qwen/TTT/DFS architecture makes this explanation strongly supported, but the claim is kept at lineage level.
+
+This also explains why the competition submission can remain `Notebook Running` for many hours even though the saved local version took only ~25 minutes: the two executions take different code paths and workloads.
+
 ## Exact results on the five generated outputs
 
 Against the matching current official ARC-AGI-2 public tasks:
@@ -58,3 +76,4 @@ Those five tasks are placeholders in this smoke file, so the generated-candidate
 3. Preserve the strongest smoke lesson: a structurally different second attempt produced one of four exact generated-output wins.
 4. Do not spend another Kaggle run merely to reproduce the smoke result.
 5. Any later public-evaluation ablation must explicitly run enough frozen evaluation tasks to produce non-placeholder candidates and must record the exact Kaggle dataset version.
+6. Treat the long hidden rerun as the expected full-path workload rather than comparing its duration directly to the 25m29s smoke save.
