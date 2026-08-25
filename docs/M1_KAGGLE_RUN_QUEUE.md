@@ -1,74 +1,69 @@
 # M1 Kaggle Run Queue
 
-Snapshot: 2026-08-24
+Snapshot: 2026-08-25
 
 The queue is ordered by information value per user-side run. A run is not performed merely because it was once planned; lower-value runs are skipped when a higher-value run already proves the same pipeline property.
 
-## N1 — competitive neural frontier — FIRST PRIORITY
+## N1 — `ARC2 vanilla exact` — COMPLETE
 
-Notebook: `ARC2 vanilla exact`
+Source: `https://www.kaggle.com/code/sorenravn/arc2-vanilla-exact`
 
-URL: `https://www.kaggle.com/code/sorenravn/arc2-vanilla-exact`
+Our Version 1:
+- clean `Save & Run All`: **25m29s** on **L4 x4**;
+- Internet OFF;
+- competition rerun: **Succeeded**;
+- Kaggle Public Score: **29.72**;
+- frozen source snapshot reference: **31.39**;
+- delta: **-1.67pp**.
 
-Current public evidence:
-- public score: **31.39**;
-- directly copyable public Kaggle notebook;
-- currently the highest score in our frozen 2026-08-24 public-code snapshot.
+Decision: **KEEP as end-to-end neural baseline anchor.** Do not spend quota rerunning N1 or a correlated ~30–32% notebook merely to chase the aggregate score.
 
-### Protocol
+Experiment: `experiments/E0001_20260825_n1_arc2_vanilla_exact.md`.
 
-1. Copy & Edit from the public notebook.
-2. Do not modify method/code for the first run.
-3. Preserve attached inputs/models exactly as copied.
-4. Use the accelerator required by the copied notebook.
-5. Keep internet disabled for competition-compatible execution.
-6. Run/save the complete version.
-7. Submit to ARC Prize 2026 — ARC-AGI-2.
-8. Record exact source version, copied version, accelerator, runtime, public score, warnings/errors, and all attached inputs.
+## E0006 — Lightning + NVIDIA NVARC feasibility — NEXT HIGH-INFORMATION GPU GATE
 
-### PASS
+Purpose: determine whether `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16` can be deployed competition-validly on Kaggle **L4 x4** and whether the public NVIDIA ARC environment is worth a frozen-development experiment.
 
-A valid submission is accepted and score/runtime are captured. Exact equality to 31.39 is not mandatory until source/input-version differences have been audited.
+This is **not a competition submission**. It should not consume leaderboard quota.
 
-## N0 — BlackCat pipeline anchor — FALLBACK ONLY
+### Gate A — inspect only
 
-Notebook: `BlackCat Stable Anchor — NVARC Guard`
+1. Attach the Lightning checkpoint as a Kaggle Model/Input using the lowest-friction HF→Kaggle path.
+2. Fresh diagnostic notebook; GPU **L4 x4**; Internet **OFF**.
+3. Run `scripts/lightning_kaggle_smoke.py` in inspect mode.
+4. Capture GPU/package inventory and exact local model path.
 
-URL: `https://www.kaggle.com/code/lucifer19/blackcat-stable-anchor-nvarc-guard`
+### Gate B — one bounded model load + one short generation
 
-Public evidence:
-- current page around **26.81**;
-- historical best **28.89 (V4)**;
-- runtime around **24m48s** on L4 x4.
+Only if Gate A is compatible. Run `scripts/lightning_vllm_kaggle_smoke.py` with the frozen compatibility configuration from `docs/M1_LIGHTNING_SMOKE_PROTOCOL.md`.
 
-### Decision change
+PASS requires a TP4 model load and one local generation without OOM/unsupported-kernel failure, with startup/runtime/memory evidence captured.
 
-N0 was originally our first run. It is now a **fallback**. N1 is itself directly copyable and validates the same end-to-end Kaggle pipeline while simultaneously establishing the stronger competition baseline. If N1 completes normally, we skip N0 and save a redundant run.
+Stop rule: one compatibility round plus one bounded mechanical fix round maximum.
 
-Use N0 only if N1 fails for environment/input reasons that need a simpler anchor.
+### Gate C — development ablation
 
-## C0 — CompressARC / MDL reference — SECONDARY
+Only after a viable Gate B. Compare source-faithful:
+- transductive direct-grid output;
+- inductive executable `transform(grid)` output;
 
-Notebook: `ARC-AGI Without Pretraining`
+on the frozen **development** split only, with equal candidate/token/runtime budgets. Validation/heldout remain sealed.
 
-URL: `https://www.kaggle.com/code/iliao2345/arc-agi-without-pretraining`
+## N2 — correlated TRM/NVARC notebook — CONDITIONAL
 
-Reference version 10/11:
-- L4 x4;
-- runtime **6m32s**;
-- ARC-AGI-2 semi-private successful runs reported in the **1.67–4.17** range.
+Public evidence around **31.11**. Skip by default now that N1 is complete. Launch only if it answers a concrete complementarity/provenance question or exposes useful candidate artifacts.
 
-C0 requires adapting the historical 2025 competition attachment to the 2026 ARC-AGI-2 input while preserving the method. It is lower priority than N1 and is timeboxed; see `docs/M1_COMPRESSARC_REPRO.md`.
+## N0 — BlackCat — RETIRED FALLBACK
 
-## After N1
+N1 validated the end-to-end Kaggle path. N0 is no longer useful unless a future environment regression specifically requires a simpler public anchor.
 
-Once N1 is reproduced, the next neural experiment is not another arbitrary public notebook. We first record N1's components/resources and then choose one controlled ablation or the 31.11 NVARC/TRM Evidence Cost notebook to isolate what TRM contributes.
+## C0 — CompressARC / MDL — RETAIN AS DISTINCT REFERENCE, NO ROUTINE RUN
 
-## User-side data to send back
+Methodologically useful, but current artifact provenance does not match the 2026 public evaluation set closely enough to justify a user-side leaderboard run in M1.
 
-For each completed Kaggle run, a screenshot of the submission/result screen is sufficient if it visibly includes:
-- notebook/version identity;
-- public score;
-- runtime/status where available.
+## User-side evidence
 
-Attached input/model names can be sent as a second screenshot if they are not visible on the result screen.
+For E0006 we prefer machine-readable smoke artifacts over screenshots. A screenshot is enough only for a UI/setup failure. The target files are:
+- `lightning_vllm_smoke.json`;
+- `lightning_vllm_serve.log`;
+- GPU/package inventory from inspect mode.
