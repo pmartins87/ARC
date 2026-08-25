@@ -14,9 +14,13 @@ class VLLMSmokeConfig:
     gpu_memory_utilization: float = 0.88
     max_model_len: int | None = 8192
     enable_expert_parallel: bool = True
-    mamba_ssm_cache_dtype: str = "float32"
+    mamba_backend: str | None = "flashinfer"
+    mamba_ssm_cache_dtype: str = "float16"
+    enable_mamba_cache_stochastic_rounding: bool = True
+    mamba_cache_philox_rounds: int | None = 5
     reasoning_parser: str | None = "nemotron_v3"
     tool_call_parser: str | None = "qwen3_coder"
+    enable_auto_tool_choice: bool = True
     trust_remote_code: bool = False
     dtype: str = "bfloat16"
     enforce_eager: bool = True
@@ -32,6 +36,8 @@ class VLLMSmokeConfig:
             raise ValueError("gpu_memory_utilization must be in (0, 1]")
         if self.max_model_len is not None and self.max_model_len <= 0:
             raise ValueError("max_model_len must be positive when provided")
+        if self.mamba_cache_philox_rounds is not None and self.mamba_cache_philox_rounds <= 0:
+            raise ValueError("mamba_cache_philox_rounds must be positive when provided")
 
     def to_dict(self) -> dict[str, Any]:
         self.validate()
@@ -41,10 +47,11 @@ class VLLMSmokeConfig:
 def build_vllm_serve_command(config: VLLMSmokeConfig, *, executable: str = "vllm") -> list[str]:
     """Build the conservative Lightning vLLM smoke command.
 
-    The flags intentionally mirror NVIDIA's published Lightning 3.5 serving
-    configuration where possible, while disabling MTP speculation for the first
-    L4 feasibility test. `enforce_eager` is enabled by default to avoid making
-    CUDA-graph capture a prerequisite for the very first load/generation smoke.
+    The command follows NVIDIA's current Lightning 3.5 vLLM guidance where it
+    materially affects compatibility, but deliberately lowers context length,
+    disables speculative decoding, and enables eager execution for the first L4
+    feasibility gate. The H100 memory-constrained recipe uses float16 Mamba SSM
+    cache, which is also the conservative choice for 24 GiB L4s.
     """
     config.validate()
     cmd = [
@@ -64,6 +71,12 @@ def build_vllm_serve_command(config: VLLMSmokeConfig, *, executable: str = "vllm
         "--mamba-ssm-cache-dtype",
         config.mamba_ssm_cache_dtype,
     ]
+    if config.mamba_backend:
+        cmd += ["--mamba-backend", config.mamba_backend]
+    if config.enable_mamba_cache_stochastic_rounding:
+        cmd.append("--enable-mamba-cache-stochastic-rounding")
+    if config.mamba_cache_philox_rounds is not None:
+        cmd += ["--mamba-cache-philox-rounds", str(config.mamba_cache_philox_rounds)]
     if config.max_model_len is not None:
         cmd += ["--max-model-len", str(config.max_model_len)]
     if config.enable_expert_parallel:
@@ -72,6 +85,8 @@ def build_vllm_serve_command(config: VLLMSmokeConfig, *, executable: str = "vllm
         cmd += ["--reasoning-parser", config.reasoning_parser]
     if config.tool_call_parser:
         cmd += ["--tool-call-parser", config.tool_call_parser]
+    if config.enable_auto_tool_choice and config.tool_call_parser:
+        cmd.append("--enable-auto-tool-choice")
     if config.trust_remote_code:
         cmd.append("--trust-remote-code")
     if config.enforce_eager:
@@ -87,6 +102,8 @@ def classify_server_failure(log_tail: str, returncode: int | None) -> str:
         return "DISK_EXHAUSTED"
     if "no module named" in text or "command not found" in text:
         return "DEPENDENCY_MISSING"
+    if "unrecognized arguments" in text or "no such option" in text:
+        return "VLLM_VERSION_OR_FLAG_MISMATCH"
     if any(token in text for token in ("unsupported", "not implemented", "no kernel", "invalid device function")):
         return "UNSUPPORTED_KERNEL_OR_ARCH"
     if "model architecture" in text and "not supported" in text:
