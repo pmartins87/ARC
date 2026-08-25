@@ -116,6 +116,32 @@ def resolve_model_path(input_root: Path, explicit: str | None, hint: str | None)
     return choose_model_root(candidates, prefer=hint)
 
 
+def load_model_config(model_path: Path) -> dict[str, Any]:
+    config_path = model_path / "config.json"
+    if not config_path.exists():
+        return {}
+    try:
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def infer_quantization(model_config: dict[str, Any], requested: str) -> str | None:
+    if requested == "none":
+        return None
+    if requested != "auto":
+        return requested
+    quant = model_config.get("quantization_config")
+    if not isinstance(quant, dict):
+        return None
+    quant_method = str(quant.get("quant_method") or "").lower()
+    quant_algo = str(quant.get("quant_algo") or "").lower()
+    if "nvfp4" in quant_algo or quant_method in {"modelopt_fp4", "nvfp4"}:
+        return "modelopt_fp4"
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
@@ -136,6 +162,9 @@ def main() -> None:
     parser.add_argument("--log-path", type=Path, default=Path("/kaggle/working/lightning_vllm_serve.log"))
     parser.add_argument("--json-out", type=Path, default=Path("/kaggle/working/lightning_vllm_smoke.json"))
     parser.add_argument("--trust-remote-code", action="store_true")
+    parser.add_argument("--quantization", default="auto", choices=("auto", "none", "modelopt_fp4"))
+    parser.add_argument("--linear-backend")
+    parser.add_argument("--moe-backend")
     parser.add_argument("--no-expert-parallel", action="store_true")
     parser.add_argument("--no-enforce-eager", action="store_true")
     parser.add_argument("--keep-server", action="store_true")
@@ -157,6 +186,8 @@ def main() -> None:
         if shutil.which("vllm") is None:
             raise RuntimeError("vllm executable not found in the Kaggle image")
         model_path = resolve_model_path(args.input_root, args.model_path, args.model_hint)
+        model_config = load_model_config(model_path)
+        quantization = infer_quantization(model_config, args.quantization)
         config = VLLMSmokeConfig(
             model_path=str(model_path),
             port=args.port,
@@ -165,10 +196,16 @@ def main() -> None:
             max_model_len=args.max_model_len,
             enable_expert_parallel=not args.no_expert_parallel,
             trust_remote_code=args.trust_remote_code,
+            quantization=quantization,
+            linear_backend=args.linear_backend,
+            moe_backend=args.moe_backend,
             enforce_eager=not args.no_enforce_eager,
         )
         command = build_vllm_serve_command(config)
         report["model_path"] = str(model_path)
+        report["checkpoint_quantization_config"] = model_config.get("quantization_config")
+        report["requested_quantization"] = args.quantization
+        report["resolved_quantization"] = quantization
         report["server_config"] = config.to_dict()
         report["command"] = command
 
