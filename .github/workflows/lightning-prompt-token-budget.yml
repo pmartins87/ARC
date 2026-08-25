@@ -1,0 +1,50 @@
+name: Lightning Prompt Token Budget
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/arcsolver/prompt_budget.py'
+      - 'src/arcsolver/nvarc_protocol.py'
+      - 'scripts/profile_lightning_prompt_tokens.py'
+      - 'tests/test_prompt_budget.py'
+      - 'experiments/evaluation_split_v2.json'
+      - '.github/workflows/lightning-prompt-token-budget.yml'
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Checkout ARC-AGI-2 public data
+        uses: actions/checkout@v4
+        with:
+          repository: arcprize/ARC-AGI-2
+          path: official-arc-agi-2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install project and tokenizer dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'transformers>=4.56,<5' 'huggingface_hub>=0.34,<1'
+
+      - name: Profile Lightning/NVARC prompt tokens
+        run: >-
+          python scripts/profile_lightning_prompt_tokens.py
+          official-arc-agi-2/data/evaluation
+          --manifest experiments/evaluation_split_v2.json
+          --json-out experiments/E0009_lightning_prompt_tokens.json
+
+      - name: Upload token-budget artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightning-prompt-token-budget
+          path: experiments/E0009_lightning_prompt_tokens.json
