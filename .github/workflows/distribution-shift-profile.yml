@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/arcsolver/distribution_profile.py'
       - 'scripts/profile_visible_distribution_shift.py'
+      - 'scripts/profile_eval_split_balance.py'
+      - 'scripts/make_split.py'
       - 'tests/test_distribution_profile.py'
       - '.github/workflows/distribution-shift-profile.yml'
   push:
@@ -13,6 +15,8 @@ on:
     paths:
       - 'src/arcsolver/distribution_profile.py'
       - 'scripts/profile_visible_distribution_shift.py'
+      - 'scripts/profile_eval_split_balance.py'
+      - 'scripts/make_split.py'
       - '.github/workflows/distribution-shift-profile.yml'
 
 jobs:
@@ -45,8 +49,26 @@ jobs:
           official-arc-agi-2/data/evaluation
           --json-out experiments/visible_distribution_shift.json
 
-      - name: Upload profile artifact
+      - name: Recreate frozen public-evaluation split
+        run: >-
+          python scripts/make_split.py
+          official-arc-agi-2/data/evaluation
+          experiments/evaluation_split_v1.json
+          --profile evaluation
+          --seed arc-2026-v1
+
+      - name: Audit frozen 60/30/30 split balance
+        run: >-
+          python scripts/profile_eval_split_balance.py
+          official-arc-agi-2/data/evaluation
+          experiments/evaluation_split_v1.json
+          --json-out experiments/evaluation_split_balance_v1.json
+
+      - name: Upload profile artifacts
         uses: actions/upload-artifact@v4
         with:
           name: visible-distribution-shift
-          path: experiments/visible_distribution_shift.json
+          path: |
+            experiments/visible_distribution_shift.json
+            experiments/evaluation_split_v1.json
+            experiments/evaluation_split_balance_v1.json
