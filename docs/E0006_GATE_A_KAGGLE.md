@@ -26,11 +26,14 @@ The BF16 checkpoint remains the higher-fidelity fallback/reference if later need
 
 1. Create/open a blank Kaggle notebook.
 2. `File -> Import Notebook -> Link` and paste the direct GitHub URL above.
-3. Attach `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4` as a Kaggle Model/Input if available through Kaggle/Hugging Face integration.
-4. Set accelerator to **GPU L4 x4**.
-5. Set notebook Internet to **OFF**.
-6. `Save Version -> Save & Run All`.
-7. After completion, download only `/kaggle/working/e0006_gate_a_inspect.json` and return that tiny file to the project.
+3. Attach `nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4` as a Kaggle Model/Input if already available.
+4. If it is not searchable in `Add Input`, open the Hugging Face model page and choose `Use this model -> Kaggle`. This creates a **starter notebook containing code that references the HF model; it does not immediately attach the weights**.
+5. In that generated notebook, do **not** run the generated `pip install` / `from_pretrained` cells. Create a **Save Version** (prefer Quick Save/no execution when offered). Kaggle's documented HF integration uses this saved notebook reference to create the linked Kaggle model page.
+6. Return to the Gate A notebook and search `Add Input` again for the newly linked model page. Only proceed once the model is actually shown as an attached Input/Model.
+7. Set accelerator to **GPU L4 x4**.
+8. Set notebook Internet to **OFF**.
+9. `Save Version -> Save & Run All`.
+10. After completion, download only `/kaggle/working/e0006_gate_a_inspect.json` and return that tiny file to the project.
 
 No ARC competition submission is made in this flow.
 
@@ -49,8 +52,8 @@ No ARC competition submission is made in this flow.
 ## Model attachment fallback order
 
 1. Search Kaggle Models for the exact NVFP4 Lightning checkpoint.
-2. Use Hugging Face -> Kaggle integration/import to materialize a Kaggle model page, then attach it.
-3. Use Kaggle's model/dataset import tooling from the public Hugging Face source.
+2. Use Hugging Face -> Kaggle integration to create the starter notebook, Save Version to trigger the linked Kaggle model page, then attach that page to Gate A.
+3. Use Kaggle's model/dataset import tooling from the public Hugging Face source if the linked page still cannot provide an attachable local model.
 4. If the quantized route cannot be materialized, repeat the attachment search with the BF16 reference.
 5. Only as a last resort route a large checkpoint through the user's PC.
 
