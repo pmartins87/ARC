@@ -38,6 +38,10 @@ Use a temporary Kaggle notebook with Internet ON to mirror the public Hugging Fa
 4. Once the Kaggle Model exists, return to `notebooks/E0006_lightning_gate_a_kaggle.ipynb`, attach that Kaggle Model in `Add Input`, set **L4 x4**, set Internet **OFF**, then `Save Version -> Save & Run All`.
 5. Return `/kaggle/working/e0006_gate_a_inspect.json` for review.
 
+### Live mirror status — 2026-08-25
+
+The temporary Kaggle VM reported **1026.8 GiB free** before transfer. The Hugging Face snapshot download completed successfully at approximately **21.6 GB**, reconstructing the full checkpoint. KaggleHub then successfully created the user-owned model `paulomartins87/nemotron-3-5-lightning` and the variation handle `paulomartins87/nemotron-3-5-lightning/pyTorch/30b-a3b-nvfp4`. The client is currently uploading the generated ~21.6 GB archive to Kaggle Models. This establishes that storage, source download and Kaggle model creation all work; only completion of the large upload remains before Gate A attachment.
+
 Kaggle documents `/kaggle/working` saved output at up to 20 GB, so a large checkpoint mirror should not rely on notebook output persistence. KaggleHub is authenticated by default inside Kaggle notebooks and its supported `model_upload(<username>/<model>/<framework>/<variation>, local_model_dir)` API is the preferred upload mechanism.
 
 No ARC competition submission is made in this flow.
