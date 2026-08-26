@@ -7,6 +7,7 @@ from pathlib import Path
 NOTEBOOKS = (
     Path("notebooks/E0006_lightning_gate_a_kaggle.ipynb"),
     Path("notebooks/E0006_lightning_gate_b_kaggle.ipynb"),
+    Path("notebooks/E0006_mirror_nvfp4_to_kaggle.ipynb"),
 )
 
 
