@@ -1,6 +1,6 @@
 # ARC-AGI-2 2026 Frontier — What Matters for Our Prize Strategy
 
-Snapshot: 2026-08-25
+Snapshot: 2026-08-26
 
 This document separates **three different frontiers** that must never be conflated:
 
@@ -12,34 +12,45 @@ That distinction materially changes our prize strategy.
 
 ## 1. Public-code Kaggle baseline frontier
 
-The public-code snapshot moved again during 2026-08-25. Public notebook evidence now includes:
+The public-code snapshot moved materially again. Public notebook evidence now includes:
 
-- `ARC Baseline Rebuild`: **Best Score 31.81, Version 73**; its current Version 89 shows 30.14 and a 5h35m52s L4 x4 runtime;
-- `ARC2 vanilla exact`: **31.39**;
+- `Failed in AIMO`: **Best/Public Score 33.89, Version 1**; successful **26m11s** run on **L4 x4**, Apache-2.0 notebook, 3 inputs and **44 output files**;
+- `ARC Baseline Rebuild`: **Best Score 31.81, Version 73**; later versions are lower;
+- `ARC2 vanilla exact`: **31.39** source snapshot; our controlled reproduction scored **29.72**;
 - `ARC 2026 NVARC TRM Evidence Cost V1`: **31.11**;
 - `ARC 2026 NVARC TRM Aggressive Cost Order`: **31.11**;
 - `ARC2 champion E48`: **29.86**;
 - `ARC-AGI-2 Public Frontier Perfpatch Evidence Lab`: **29.03**;
 - `ARC AGI2 Minimal Augmentation Specialist`: **28.89**.
 
-Therefore **31.81 is the strongest public-notebook score currently verified in our audit**, while 31.39 remains our first controlled reproduction anchor. The 31.81 evidence is a notebook-version-history leaderboard result, not yet our own reproduction and not evidence of task-level complementarity.
+Therefore **33.89 is the strongest public-notebook score currently verified in our audit**. N1 remains our controlled reproduction anchor because a stronger public score is not automatically a better scientific baseline.
+
+A related public clone, `Failed in AIMO on Docker-v169-v03`, exposes `qwen3_4b_bfloat16-v02-01-01`, `flash-attn-2.8.2` and an Unsloth notebook dependency, but scores only **29.86**. This supports treating the 33.89 source as part of the broad Qwen/NVARC-style public family while leaving the exact cause of the 33.89 gain unresolved.
+
+The 44 output files make this notebook more interesting as an **artifact-audit target** than as another leaderboard reproduction. See `docs/M1_PUBLIC_3389_AUDIT.md`.
 
 These public notebooks are useful because their code/resources can be inspected. **They are not the live competition frontier.** A gain from our N1 anchor to 35–40% would still be meaningful engineering/scientific progress, but it is not reasonable to treat 35–40% as a likely prize-contending target given the live leaderboard below.
 
-Sources captured 2026-08-25:
-- https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-2/code
+Sources captured/re-verified 2026-08-26:
+- https://www.kaggle.com/code/koushikrudra/failed-in-aimo
+- https://www.kaggle.com/code/konstantinboyko/failed-in-aimo-on-docker-v169-v03/comments
 - https://www.kaggle.com/code/yusuketogashi/arc-baseline-rebuild/output
+- https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-2/code
 
-### N2 consequence
+### P33 consequence
 
-The 31.81 public best does **not** trigger an automatic reproduction. It is only +0.42 percentage points over N1's public 31.39 and is still about forty points below the live leaders. A new public baseline consumes Kaggle quota only if its artifacts/method provide high-information complementarity, candidate-pool, runtime or provenance evidence.
+`Failed in AIMO` is assigned internal label **P33**.
+
+P33 does **not** trigger an automatic competition run. The +2.08pp over the previous 31.81 public best and +4.17pp over our N1 score are insufficient reasons by themselves to spend user-side execution or leaderboard quota while live leaders remain ~70%+.
+
+P33 is worth inspecting because its 44 outputs may expose candidate pools, per-task traces, selector evidence, coverage/runtime telemetry or other artifacts that can answer M1 evidence buckets B/C/D without another run.
 
 ## 2. Live competition frontier — major strategy reset
 
 Fresh ARC Prize public updates on 2026-08-25 report:
 
-- **nvbanana: 72.08%** — current high score;
-- **rabbithole: 70.42%** — current second place, after a reported jump from 50.42% over the weekend.
+- **nvbanana: 72.08%** — high score in the latest evidence currently frozen here;
+- **rabbithole: 70.42%** — second place in that evidence, after a reported jump from 50.42% over the weekend.
 
 ARC Prize President Greg Kamradt publicly noted that nvbanana appeared to have the competition locked around 72% before rabbithole's +20 percentage-point jump and suggested multiple teams may eventually reach the 85% threshold.
 
@@ -52,17 +63,15 @@ Sources captured 2026-08-25:
 
 ### Consequence
 
-Our earlier mental model that the competition frontier was around 31% was too optimistic about how close a public notebook baseline is to a prize position.
-
 Correct interpretation:
 
-> **~31.8% is the current public-notebook frontier we can inspect, while ~72% is the current live competition frontier.**
+> **33.89% is the current public-notebook frontier we can inspect, while ~72% is the latest live competition frontier in our evidence.**
 
-That gap is enormous and means incremental notebook tuning alone is unlikely to be enough for a Progress Prize unless the live field changes unexpectedly.
+That gap is still enormous. Incremental notebook tuning alone is unlikely to be enough for a Progress Prize unless the live field changes unexpectedly.
 
 ## 3. Competition constraints and hidden rerun
 
-The Kaggle competition reruns submitted notebooks on **240 unseen tasks**. The majority have one test input, with a small number requiring two outputs. The public leaderboard is calculated from approximately half the hidden test data and final standings from the other half.
+The Kaggle competition reruns submitted notebooks on **240 unseen tasks**. The majority have one test input, with a minority requiring multiple outputs. Each test output is scored independently and either exact attempt can earn that output's point.
 
 The notebook must run self-contained, offline, under the Kaggle compute/runtime limits. This makes the 70%+ live scores especially important: they demonstrate that very high ARC-AGI-2 performance is already achievable **inside the competition sandbox**, not only through online frontier APIs.
 
@@ -104,7 +113,7 @@ Source:
 
 ## 6. Open-weight / hardware reality
 
-Large open-weight ARC-capable models can exceed our public-code anchor but may not fit 4xL4 directly. The current preferred feasibility probe, Nemotron 3.5 Lightning BF16 TP4, now has a vendor-published NIM profile floor of 20 GB/GPU on four Ampere-or-newer GPUs; the target L4 x4 satisfies that floor on nominal memory, count and architecture. Bare-vLLM Kaggle compatibility and throughput still require measurement.
+Large open-weight ARC-capable models can exceed our controlled baseline but may not fit 4xL4 directly. The current preferred feasibility probe is Nemotron 3.5 Lightning NVFP4, pinned to a specific upstream revision for reproducibility. Vendor documentation indicates a W4A16 fallback path on non-native FP4 hardware, while the BF16 TP4 profile floor is 20 GB/GPU on four Ampere-or-newer GPUs. The target L4 x4 satisfies the nominal BF16 profile floor; bare-vLLM Kaggle compatibility and throughput still require measurement.
 
 The live 70%+ competition scores prove that **a competition-fit route exists**. We should therefore focus less on asking whether 4xL4 is enough in principle and more on discovering what efficient representation/search/adaptation/selection stack makes such performance possible.
 
@@ -114,7 +123,7 @@ Public details of the current leaders' complete methods are not yet available he
 
 Low-value direction:
 - optimize toward 35–40% and mistake that for a prize target;
-- spend runs reproducing every +0.x public notebook update;
+- spend runs reproducing every public notebook update for score alone;
 - stack correlated public notebooks without unique exact coverage;
 - blindly imitate hosted API systems that cannot fit the competition;
 - assume more refinement iterations necessarily improve reasoning;
@@ -122,6 +131,7 @@ Low-value direction:
 
 High-value direction:
 - use N1 as a controlled open anchor, not the target frontier;
+- mine P33's public artifacts before considering a reproduction;
 - obtain candidate-pool, selector and runtime evidence;
 - identify which failure class creates the largest exact-score loss;
 - preserve genuinely diverse hypotheses under the two-attempt budget;
@@ -131,14 +141,15 @@ High-value direction:
 
 ## 8. M1 consequence
 
-M1 should still finish rather than panic and restart:
+M1 should still finish rather than restart around every public score change:
 
-1. N1 hidden rerun remains necessary as our reproducible open anchor;
-2. candidate-pool / selector / runtime / provenance instrumentation remains useful;
-3. N2 stays conditional because another ~31–32% public notebook does not close a ~40-point live-frontier gap;
-4. the Lightning/NVARC L4 feasibility smoke is higher information value than a leaderboard-only 31.81 reproduction;
-5. before M2, hypotheses must be ranked by **potential step-change leverage**, not just likelihood of +1–2 points;
-6. we must search for public evidence from current 70%+ teams as it appears;
-7. exact current top-8 threshold remains an open fact to retrieve, not something to estimate casually.
+1. N1 competition evidence is **complete** at 29.72 and remains our reproducible open anchor;
+2. candidate-pool / selector / runtime / provenance instrumentation remains high priority;
+3. P33 is **inspect-only first** because its 44 outputs may provide this evidence without another Kaggle run;
+4. N2 stays conditional because another correlated Qwen-family leaderboard number does not close the live-frontier gap;
+5. the Lightning/NVARC L4 feasibility smoke remains the next user-side GPU gate because it probes a materially different ARC-post-trained open-weight path;
+6. before M2, hypotheses must be ranked by **potential step-change leverage**, not just likelihood of +1–2 points;
+7. we must keep searching for public evidence from current 70%+ teams as it appears;
+8. exact current top-8 threshold remains an open fact to retrieve, not something to estimate casually.
 
 The scientific/Paper Prize path remains valuable even if current Progress Prize odds are low. A strong, reproducible mechanism can still be important even before it reaches the 70% live frontier.
