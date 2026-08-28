@@ -12,6 +12,7 @@ NOTEBOOKS = (
     Path("notebooks/E0006_vllm_cu129_resolution_probe_kaggle.ipynb"),
     Path("notebooks/E0006_vllm_cu129_wheelhouse_builder_kaggle.ipynb"),
     Path("notebooks/E0006_offline_import_smoke_kaggle.ipynb"),
+    Path("notebooks/E0006_gpu_runtime_preflight_kaggle.ipynb"),
 )
 
 
